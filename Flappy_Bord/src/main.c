@@ -145,7 +145,7 @@ uint8_t notes[] = { 60,62,64,65,67,69,71,72,71,69,67,65,64,62,60,0 };
 uint8_t num = sizeof notes / sizeof notes[0] - 1;
 void TIM2_IRQHandler(void)
 {
-    TIM2->SR &= ~TIM_SR_UIF;
+    TIM2->SR &= ~TIM_SR_UIF;    
 
     midi_play();
 }
