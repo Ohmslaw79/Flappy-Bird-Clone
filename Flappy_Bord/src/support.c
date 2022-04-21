@@ -166,4 +166,3 @@ void basic_drawing(void)
     LCD_DrawFillRectangle(10, 140, 120, 159, WHITE);
     LCD_DrawString(20,141, BLACK, WHITE, "Test string!", 16, 0); // opaque background
 }
-

@@ -3,55 +3,35 @@
 
 void init_lcd_spi(void)
 {
-	RCC->AHBENR |= RCC_AHBENR_GPIOBEN;
+    RCC->AHBENR |= RCC_AHBENR_GPIOBEN;
 
-	//set as outputs
-	GPIOB->MODER &= ~0x30c30000; //0011 0000 1100 0011 0000 0000 0000 0000
-	GPIOB->MODER |= 0x10410000;  //0001 0000 0100 0001 0000 0000 0000 0000
+    GPIOB->MODER &= ~(GPIO_MODER_MODER3 | GPIO_MODER_MODER5 | GPIO_MODER_MODER8 | GPIO_MODER_MODER11 | GPIO_MODER_MODER14);
+    GPIOB->MODER |= GPIO_MODER_MODER8_0 | GPIO_MODER_MODER11_0 | GPIO_MODER_MODER14_0;
+    GPIOB->MODER |= GPIO_MODER_MODER3_1 | GPIO_MODER_MODER5_1;
+    GPIOB->AFR[0] &= ~(GPIO_AFRL_AFR3 | GPIO_AFRL_AFR5);
+    GPIOB->BSRR = GPIO_BSRR_BS_8 | GPIO_BSRR_BS_11 | GPIO_BSRR_BS_14;
 
-	//set logic high
-	GPIOB->ODR |= 0x4900; //0100 1001 0000 0000
-
-	//set to alternative function 0
-	GPIOB->AFR[0] &= ~0xf0f000 ;//1111 0000 1111 0000 0000 0000
-
-	//"""Enable the SPI channel."""
-	RCC->APB1ENR |= 1<<14;
-
-	//"""Ensure that the CR1_SPE bit is clear. Many of the bits set in the control registers require that the SPI channel is not enabled."""
-	SPI2->CR1 &= ~(1<<6);
-
-	//"""Configure the interface for a 8-bit word size."""
-	SPI2->CR2 = SPI_CR2_DS_0 |SPI_CR2_DS_1 |SPI_CR2_DS_2;
-
-	//"""Configure the SPI channel to be in master mode."""
-	SPI2->CR1 |= (1<<2);
-
-	//Set the SSM and SSI bits
-	SPI2->CR1 |= SPI_CR1_SSI | SPI_CR1_SSM;
-
-	SPI2->CR1 |= (1<<6);
-
+    RCC->APB2ENR |= RCC_APB2ENR_SPI1EN;
+    SPI1->CR1 &= ~SPI_CR1_SPE;
+    SPI1->CR1 |= SPI_CR1_MSTR | SPI_CR1_SSM | SPI_CR1_SSI;
+    SPI1->CR1 &= ~SPI_CR1_BR;
+    SPI1->CR2 = SPI_CR2_DS_0 | SPI_CR2_DS_1 | SPI_CR2_DS_2;
+    SPI1->CR1 |= SPI_CR1_SPE;
 }
 
 void setup_buttons(void)
 {
-    RCC->AHBENR |= RCC_AHBENR_GPIOCEN;
+    RCC->AHBENR |= RCC_AHBENR_GPIOCEN | RCC_AHBENR_GPIOBEN;
 
-    //set as outputs
-    GPIOC->MODER &= ~0xff00; //1111 1111 0000 0000
-    GPIOC->MODER |= 0x5500;//0101 0101 0000 0000
+    GPIOC->MODER &= ~(GPIO_MODER_MODER4 | GPIO_MODER_MODER5 | GPIO_MODER_MODER6 | GPIO_MODER_MODER7);
+    GPIOC->MODER |= GPIO_MODER_MODER4_0 | GPIO_MODER_MODER5_0 | GPIO_MODER_MODER6_0 | GPIO_MODER_MODER7_0;
 
-    //set open drain
-    GPIOC->OTYPER |= 0xf0;//1111 0000
+    GPIOC->OTYPER |= GPIO_OTYPER_OT_4 | GPIO_OTYPER_OT_5 | GPIO_OTYPER_OT_6 | GPIO_OTYPER_OT_7;
 
-    //set as inputs
-    GPIOC->MODER &= ~0xff; //1111 1111
+    GPIOC->MODER &= ~(GPIO_MODER_MODER0 | GPIO_MODER_MODER1 | GPIO_MODER_MODER2 | GPIO_MODER_MODER3);
 
-    //enable internal pullup resistors
-    GPIOC->PUPDR &= ~0xff;
-    GPIOC->PUPDR |= 0x55;
-
+    GPIOC->PUPDR &= ~(GPIO_PUPDR_PUPDR0 | GPIO_PUPDR_PUPDR1 | GPIO_PUPDR_PUPDR2 | GPIO_PUPDR_PUPDR3);
+    GPIOC->PUPDR |= (GPIO_PUPDR_PUPDR0_0 | GPIO_PUPDR_PUPDR1_0 | GPIO_PUPDR_PUPDR2_0 | GPIO_PUPDR_PUPDR3_0);
 }
 
 void basic_drawing(void);
@@ -64,4 +44,3 @@ int main(void)
     basic_drawing();
     move_ball();
 }
-
