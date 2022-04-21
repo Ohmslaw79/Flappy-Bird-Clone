@@ -212,6 +212,7 @@ int main(void)
     setup_buttons();
     LCD_Setup(); // this will call init_lcd_spi()
     basic_drawing();
+    move_ball();
 
     init_wavetable_hybrid2();
     init_dac();
