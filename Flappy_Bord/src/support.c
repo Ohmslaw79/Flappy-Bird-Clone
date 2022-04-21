@@ -95,7 +95,7 @@ void update2(int x, int y)
 {
     TempPicturePtr(tmp,29,29); // Create a temporary 29x29 image.
     pic_subset(tmp, &background, x-tmp->width/2, y-tmp->height/2); // Copy the background
-    pic_overlay(tmp, 5,5, &ball, 0xffff); // Overlay the ball
+    pic_overlay(tmp, 5,5, &ball, 0xff); // Overlay the ball
     LCD_DrawPicture(x-tmp->width/2,y-tmp->height/2, tmp); // Draw
 }
 
