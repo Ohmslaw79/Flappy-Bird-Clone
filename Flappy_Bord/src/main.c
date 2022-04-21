@@ -19,9 +19,6 @@ struct {
     int     offset;
 } voice[VOICES];
 
-#include "stm32f0xx.h"
-#include "lcd.h"
-
 void init_lcd_spi(void)
 {
     RCC->AHBENR |= RCC_AHBENR_GPIOBEN;
@@ -215,7 +212,6 @@ int main(void)
     setup_buttons();
     LCD_Setup(); // this will call init_lcd_spi()
     basic_drawing();
-    move_ball();
 
     init_wavetable_hybrid2();
     init_dac();
