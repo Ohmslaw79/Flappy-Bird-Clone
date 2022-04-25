@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include "midi.h"
 #include "midiplay.h"
+#include "support.c"
 
 // The number of simultaneous voices to support.
 #define VOICES 15
@@ -11,10 +12,10 @@
 extern const Picture background; // A 240x320 background image
 extern const Picture ball; // A 19x19 purple ball with white boundaries
 
-void move_ball_timer();
-void basic_drawing(void);
-void move_ball(void);
-void drive_colum(int);
+// void move_ball_timer();
+// void basic_drawing(void);
+// void move_ball(void);
+// void drive_colum(int);
 
 
 int x = 120;
@@ -78,6 +79,7 @@ void init_tim7(){
 
 void TIM7_IRQHandler(){
     TIM7->SR &= ~TIM_SR_UIF;
+    move_ball_physics(&x,&y,&v)
     move_ball_timer(&x, &y);
 }
 

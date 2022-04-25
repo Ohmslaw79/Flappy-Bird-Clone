@@ -11,10 +11,10 @@
 extern const Picture background; // A 240x320 background image
 extern const Picture ball; // A 19x19 purple ball with white boundaries
 
-void move_ball_timer();
-void basic_drawing(void);
-void move_ball(void);
-void drive_colum(int);
+// void move_ball_timer();
+// void basic_drawing(void);
+// void move_ball(void);
+// void drive_colum(int);
 
 
 int x = 120;
