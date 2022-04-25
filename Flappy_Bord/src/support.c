@@ -93,9 +93,9 @@ void update(int x, int y)
 
 void update2(int x, int y)
 {
-    TempPicturePtr(tmp,29,29); // Create a temporary 29x29 image.
+    TempPicturePtr(tmp,60,60); // Create a temporary 50x50 image.
     pic_subset(tmp, &background, x-tmp->width/2, y-tmp->height/2); // Copy the background
-    pic_overlay(tmp, 5,5, &ball, 0xff); // Overlay the ball
+    pic_overlay(tmp, 5,5, &ball, 0xffff); // Overlay the ball
     LCD_DrawPicture(x-tmp->width/2,y-tmp->height/2, tmp); // Draw
 }
 
@@ -198,7 +198,7 @@ void move_ball_timer(int* x, int* y)
         if (dx !=0 || dy != 0) {
             *x += dx;
             *y += dy;
-            update(*x,*y);
+            update2(*x,*y);
         }
     }
 }
