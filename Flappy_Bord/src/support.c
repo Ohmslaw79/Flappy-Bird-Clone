@@ -203,6 +203,7 @@ void move_ball_timer(int* x, int* y)
     }
 }
 
+
 void basic_drawing(void)
 {
     LCD_Clear(0);

@@ -7,6 +7,7 @@
 // The number of simultaneous voices to support.
 #define VOICES 15
 #define UPDATE_RATE 30 //In updates per second
+#define GRAVITY -5/1000
 
 extern const Picture background; // A 240x320 background image
 extern const Picture ball; // A 19x19 purple ball with white boundaries
@@ -19,6 +20,7 @@ extern const Picture ball; // A 19x19 purple ball with white boundaries
 
 int x = 120;
 int y = 160;
+int v = 0; //velocity
 
 // An array of "voices".  Each voice can be used to play a different note.
 // Each voice can be associated with a channel (explained later).
@@ -65,6 +67,24 @@ void setup_buttons(void)
     GPIOC->PUPDR |= (GPIO_PUPDR_PUPDR0_0 | GPIO_PUPDR_PUPDR1_0 | GPIO_PUPDR_PUPDR2_0 | GPIO_PUPDR_PUPDR3_0);
 }
 
+void init_button(){
+    RCC->AHBENR |= RCC_AHBENR_GPIOBEN;
+    GPIOB->MODER &= ~GPIO_MODER_MODER6;
+
+    GPIOB->PUPDR &= ~GPIO_PUPDR_PUPDR6;
+    GPIOB->PUPDR |= GPIO_PUPDR_PUPDR6_1;
+
+    NVIC->ISER[0] |= 1<<7;
+
+    SYSCFG->EXTICR[1] |= SYSCFG_EXTICR2_EXTI6_PB;
+    
+}
+
+void EXTI4_15_IRQHandler(){
+    NVIC->ICPR[0]|= 1<<7; 
+    v = 15;
+}
+
 void init_tim7(){
     RCC->APB1ENR |= RCC_APB1ENR_TIM7EN;
     TIM7->PSC = 4800-1;
@@ -78,8 +98,21 @@ void init_tim7(){
 
 void TIM7_IRQHandler(){
     TIM7->SR &= ~TIM_SR_UIF;
-    move_ball_timer(&x, &y);
+    move_ball_physics(&x,&y,&v);
+    //move_ball_timer(&x, &y);
 }
+
+void move_ball_physics(int* x, int* y, int* v)
+{
+    int dv = *v<=-10? 0 : -1;
+    *v += dv;
+    int dy = *v/2;
+    *y -= dy;
+    *y = *y<0 ? 0 : *y;
+    update2(*x,*y);
+}
+
+
 
 // We'll use the Timer 6 IRQ to recompute samples and feed those
 // samples into the DAC.
@@ -235,7 +268,8 @@ void init_tim2(int n) {
 
 int main(void)
 {
-    setup_buttons();
+    //setup_buttons();
+    init_button();
     LCD_Setup(); // this will call init_lcd_spi()
     basic_drawing();
     //move_ball();
