@@ -20,6 +20,7 @@
         "MSTR",
         "NVIC",
         "PUPDR",
+        "SRAM",
         "TRGO",
         "TSEL",
         "USART",

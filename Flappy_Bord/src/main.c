@@ -6,6 +6,19 @@
 
 // The number of simultaneous voices to support.
 #define VOICES 15
+#define UPDATE_RATE 30 //In updates per second
+
+extern const Picture background; // A 240x320 background image
+extern const Picture ball; // A 19x19 purple ball with white boundaries
+
+void move_ball_timer();
+void basic_drawing(void);
+void move_ball(void);
+void drive_colum(int);
+
+
+int x = 120;
+int y = 160;
 
 // An array of "voices".  Each voice can be used to play a different note.
 // Each voice can be associated with a channel (explained later).
@@ -52,8 +65,21 @@ void setup_buttons(void)
     GPIOC->PUPDR |= (GPIO_PUPDR_PUPDR0_0 | GPIO_PUPDR_PUPDR1_0 | GPIO_PUPDR_PUPDR2_0 | GPIO_PUPDR_PUPDR3_0);
 }
 
-void basic_drawing(void);
-void move_ball(void);
+void init_tim7(){
+    RCC->APB1ENR |= RCC_APB1ENR_TIM7EN;
+    TIM7->PSC = 4800-1;
+    TIM7->ARR = (10000 / UPDATE_RATE) - 1;
+
+    TIM7->DIER |= TIM_DIER_UIE;
+    NVIC->ISER[0] |= 1 << 18;
+    NVIC->IP[4] |= 1<<22; //Lower Priority of Tim 7 ISR
+    TIM7->CR1 |= TIM_CR1_CEN;
+}
+
+void TIM7_IRQHandler(){
+    TIM7->SR &= ~TIM_SR_UIF;
+    move_ball_timer(&x, &y);
+}
 
 // We'll use the Timer 6 IRQ to recompute samples and feed those
 // samples into the DAC.
@@ -212,7 +238,10 @@ int main(void)
     setup_buttons();
     LCD_Setup(); // this will call init_lcd_spi()
     basic_drawing();
-    move_ball();
+    //move_ball();
+    LCD_DrawPicture(0,0,&background);
+    update(x,y);
+    init_tim7();
 
     init_wavetable_hybrid2();
     init_dac();
