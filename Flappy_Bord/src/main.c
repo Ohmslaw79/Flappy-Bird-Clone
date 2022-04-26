@@ -120,7 +120,7 @@ void TIM7_IRQHandler(){ //LCD update and physics calculations
         {
             for(int i = 0; i < 10000; i++);
             draw_bird2(bird_x,bird_y); //TODO - Add in pipe drawing, timing, and spacing logic
-            for(int j = 0; j <109000; j++);
+            for(int j = 0; j <10000; j++);
             draw_bird3(bird_x,bird_y); //TODO - Add in pipe drawing, timing, and spacing logic
             for(int k = 0; k < 10000; k++);
             draw_bird2(bird_x,bird_y); //TODO - Add in pipe drawing, timing, and spacing logic
