@@ -1,12 +1,13 @@
 /* GIMP RGB C-Source image dump (bird3.c) */
 
-static const struct {
+const struct {
   unsigned int 	 width;
   unsigned int 	 height;
   unsigned int 	 bytes_per_pixel; /* 2:RGB16, 3:RGB, 4:RGBA */ 
+  int            transparent;
   unsigned char	 pixel_data[34 * 24 * 2 + 1];
-} gimp_image = {
-  34, 24, 2,
+} bird3 = {
+  34, 24, 2, 0xFFFF,
   "\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377"
   "\377\377\377\377\377\377\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"
   "\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377"
