@@ -39,7 +39,6 @@
 #define PIPE_BOTTOM brick_wall
 
 extern const Picture bird1;
-extern const Picture bird2;
 extern const Picture bird3;
 extern const Picture brick_wall;
 extern const Picture backgroundFlappy;
