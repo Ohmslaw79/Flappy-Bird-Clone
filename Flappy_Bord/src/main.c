@@ -34,6 +34,7 @@
 #define PIPE_WIDTH 0
 
 #define BACKGROUND backgroundFlappy
+#define BIRD bird1
 #define PIPE_TOP brick_wall
 #define PIPE_BOTTOM brick_wall
 
@@ -362,7 +363,6 @@ int main(void)
     init_tim2(10417);
 
     new_game();
-    
     for(;;) {
         if(bird_y > 350){
             start_game = 0;
@@ -375,4 +375,3 @@ int main(void)
             mp = midi_init(midifile);
     }
 }
-
