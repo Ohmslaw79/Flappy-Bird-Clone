@@ -4,11 +4,6 @@
 #include "midi.h"
 #include "midiplay.h"
 #include <stdlib.h>
-// #include "bird1.c"
-// #include "bird2.c"
-// #include "bird3.c"
-// #include "brick_wall.c"
-// #include "backgroundFlappy.c"
 
 #define VOICES 15
 
@@ -16,7 +11,6 @@
 #define NEW_GAME_START_X 30
 #define NEW_GAME_START_Y 160
 
-#define GRAVITY -5/1000
 #define UPPER_SCREEN_BOUND 0
 #define LOWER_SCREEN_BOUND 350
 #define MAX_DOWNWARD_VELOCITY -12
@@ -24,17 +18,16 @@
 #define JUMP_VELOCITY 15
 
 #define PIPE_HORIZONTAL_PAD 0
-#define PIPE_VERTICAL_PAD
+#define PIPE_VERTICAL_PAD 0
 #define BIRD_VERTICAL_PAD 16
-#define BIRD_HORIZONTAL_PAD 16
+#define BIRD_HORIZONTAL_PAD 0
 
-#define BIRD_HEIGHT 50
-#define BIRD_WIDTH 50
+#define BIRD_HEIGHT 24
+#define BIRD_WIDTH 34
 #define PIPE_HEIGHT 0
 #define PIPE_WIDTH 0
 
 #define BACKGROUND backgroundFlappy
-#define BIRD bird1
 #define PIPE_TOP brick_wall
 #define PIPE_BOTTOM brick_wall
 
@@ -47,8 +40,11 @@ extern const Picture backgroundFlappy;
 int bird_x = NEW_GAME_START_X;
 int bird_y = NEW_GAME_START_Y;
 int bird_v = 0; //velocity
-int bird_state = 1; //1 = normal, 2= flapping, 3= dead
-Picture* bird_pic = &bird1;
+int bird_state = 1; //1 = normal, 2= flapping
+
+int pipe_x = 0;
+int pipe_y = 0;
+
 char physics_enabled = 0;
 char start_game = 0;
 int player_score = 0;
@@ -106,6 +102,7 @@ void EXTI4_15_IRQHandler(){
     EXTI->PR |= EXTI_PR_PR6;
     start_game = 1;
     bird_v = JUMP_VELOCITY;
+    bird_state = 2;
 }
 
 void init_tim7(){
@@ -121,11 +118,6 @@ void init_tim7(){
 
 void TIM7_IRQHandler(){ //LCD update and physics calculations
     TIM7->SR &= ~TIM_SR_UIF;
-    int animation_counter = 0;
-    if(bird_state == 1){
-        bird_pic = &bird1;
-    }
-    else if(bird_state == 2)
     if(physics_enabled){
         int dv = bird_v<=MAX_DOWNWARD_VELOCITY? 0 : -1;
         bird_v += dv;
@@ -323,6 +315,7 @@ void draw_num(u16 x,u16 y,u16 fc, u16 bc, int num, u8 size, u8 mode){
 
 void new_game(){
     LCD_Clear(0);
+    bird_state = 1;
     int current_line = 50;
 
     if(seed > 0) { 
