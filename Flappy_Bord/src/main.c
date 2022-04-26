@@ -4,27 +4,30 @@
 #include "midi.h"
 #include "midiplay.h"
 
-// The number of simultaneous voices to support.
 #define VOICES 15
 #define UPDATE_RATE 30 //In updates per second
 #define GRAVITY -5/1000
+#define UPPER_SCREEN_BOUND 0
+#define LOWER_SCREEN_BOUND 350
+#define MAX_DOWNWARD_VELOCITY -12
+#define VELOCITY_MODIFIER 2
+#define JUMP_VELOCITY 15
 
 extern const Picture background; // A 240x320 background image
 extern const Picture ball; // A 19x19 purple ball with white boundaries
 
-// void move_ball_timer();
-// void basic_drawing(void);
-// void move_ball(void);
-// void drive_colum(int);
-
-
-int x = 120;
+int x = 100;
 int y = 160;
 int v = 0; //velocity
+char physics_enabled = 0;
+char start_game = 0;
+int current_score = 0;
+int high_score = 0;
 
-// An array of "voices".  Each voice can be used to play a different note.
-// Each voice can be associated with a channel (explained later).
-// Each voice has a step size and an offset into the wave table.
+
+uint8_t notes[] = { 60,62,64,65,67,69,71,72,71,69,67,65,64,62,60,0 };
+uint8_t num = sizeof notes / sizeof notes[0] - 1;
+
 struct {
     uint8_t in_use;
     uint8_t note;
@@ -52,21 +55,6 @@ void init_lcd_spi(void)
 	SPI1->CR1 |= SPI_CR1_SPE;
 }
 
-void setup_buttons(void)
-{
-    RCC->AHBENR |= RCC_AHBENR_GPIOCEN | RCC_AHBENR_GPIOBEN;
-
-    GPIOC->MODER &= ~(GPIO_MODER_MODER4 | GPIO_MODER_MODER5 | GPIO_MODER_MODER6 | GPIO_MODER_MODER7);
-    GPIOC->MODER |= GPIO_MODER_MODER4_0 | GPIO_MODER_MODER5_0 | GPIO_MODER_MODER6_0 | GPIO_MODER_MODER7_0;
-
-    GPIOC->OTYPER |= GPIO_OTYPER_OT_4 | GPIO_OTYPER_OT_5 | GPIO_OTYPER_OT_6 | GPIO_OTYPER_OT_7;
-
-    GPIOC->MODER &= ~(GPIO_MODER_MODER0 | GPIO_MODER_MODER1 | GPIO_MODER_MODER2 | GPIO_MODER_MODER3);
-
-    GPIOC->PUPDR &= ~(GPIO_PUPDR_PUPDR0 | GPIO_PUPDR_PUPDR1 | GPIO_PUPDR_PUPDR2 | GPIO_PUPDR_PUPDR3);
-    GPIOC->PUPDR |= (GPIO_PUPDR_PUPDR0_0 | GPIO_PUPDR_PUPDR1_0 | GPIO_PUPDR_PUPDR2_0 | GPIO_PUPDR_PUPDR3_0);
-}
-
 void init_button(){
     RCC->AHBENR |= RCC_AHBENR_GPIOBEN;
     GPIOB->MODER &= ~GPIO_MODER_MODER6;
@@ -74,15 +62,19 @@ void init_button(){
     GPIOB->PUPDR &= ~GPIO_PUPDR_PUPDR6;
     GPIOB->PUPDR |= GPIO_PUPDR_PUPDR6_1;
 
-    NVIC->ISER[0] |= 1<<7;
 
+    RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;
+    SYSCFG->EXTICR[1] &= ~SYSCFG_EXTICR2_EXTI6;
     SYSCFG->EXTICR[1] |= SYSCFG_EXTICR2_EXTI6_PB;
-    
+    EXTI->RTSR |= EXTI_RTSR_TR6;
+    EXTI->IMR |= EXTI_IMR_MR6;
+    NVIC->ISER[0] |= 1<<7;
 }
 
 void EXTI4_15_IRQHandler(){
-    NVIC->ICPR[0]|= 1<<7; 
-    v = 15;
+    EXTI->PR |= EXTI_PR_PR6;
+    start_game = 1;
+    v = JUMP_VELOCITY;
 }
 
 void init_tim7(){
@@ -96,29 +88,42 @@ void init_tim7(){
     TIM7->CR1 |= TIM_CR1_CEN;
 }
 
-void TIM7_IRQHandler(){
+void TIM7_IRQHandler(){ //LCD update and physics calculations
     TIM7->SR &= ~TIM_SR_UIF;
-    move_ball_physics(&x,&y,&v);
-    //move_ball_timer(&x, &y);
+    if(physics_enabled){
+        int dv = v<=MAX_DOWNWARD_VELOCITY? 0 : -1;
+        v += dv;
+        int dy = (y > LOWER_SCREEN_BOUND && v < 0) || (y < UPPER_SCREEN_BOUND && v > 0) ? 0 : v/VELOCITY_MODIFIER;
+        y -= dy;
+        update2(x,y);
+    }
 }
 
-void move_ball_physics(int* x, int* y, int* v)
+void enable_physics(){
+    physics_enabled = 1;
+}
+
+void disable_physics(){
+    physics_enabled = 0;
+}
+
+void init_tim6(void)
 {
-    int dv = *v<=-10? 0 : -1;
-    *v += dv;
-    int dy = *v/2;
-    *y -= dy;
-    *y = *y<0 ? 0 : *y;
-    update2(*x,*y);
+    RCC->APB1ENR |= RCC_APB1ENR_TIM6EN;
+    TIM6->PSC = (48000000 / (2 * RATE)) - 1;
+    TIM6->ARR = 1;
+
+    TIM6->DIER |= TIM_DIER_UIE;
+    NVIC->ISER[0] |= 1 << 17;
+    TIM6->CR2 &= ~TIM_CR2_MMS;
+    TIM6->CR2 |= TIM_CR2_MMS_1;
+
+    TIM6->CR1 |= TIM_CR1_CEN;
+
 }
 
-
-
-// We'll use the Timer 6 IRQ to recompute samples and feed those
-// samples into the DAC.
 void TIM6_DAC_IRQHandler(void)
 {
-    // DONE: Remember to acknowledge the interrupt right here.
     TIM6->SR &= ~TIM_SR_UIF;
     int sample = 0;
     for(int x=0; x < sizeof voice / sizeof voice[0]; x++) {
@@ -137,8 +142,6 @@ void TIM6_DAC_IRQHandler(void)
     DAC->DHR12R1 = sample;
 }
 
-// Initialize the DAC so that it can output analog samples
-// on PA4.  Configure it to be triggered by TIM6 TRGO.
 void init_dac(void)
 {
     RCC->APB1ENR |= RCC_APB1ENR_DACEN;
@@ -148,27 +151,6 @@ void init_dac(void)
     DMA1_Channel5->CNDTR = 23;
 }
 
-// Initialize Timer 6 so that it calls TIM6_DAC_IRQHandler
-// at exactly RATE times per second.  You'll need to select
-// a PSC value and then do some math on the system clock rate
-// to determine the value to set for ARR.  Set it to trigger
-// the DAC by enabling the Update Trigger in the CR2 MMS field.
-void init_tim6(void)
-{
-    RCC->APB1ENR |= RCC_APB1ENR_TIM6EN;
-    TIM6->PSC = (48000000 / (2 * RATE)) - 1;
-    TIM6->ARR = 1;
-
-    TIM6->DIER |= TIM_DIER_UIE;
-    NVIC->ISER[0] |= 1 << 17;
-    TIM6->CR2 &= ~TIM_CR2_MMS;
-    TIM6->CR2 |= TIM_CR2_MMS_1;
-
-    TIM6->CR1 |= TIM_CR1_CEN;
-
-}
-
-// Find the voice current playing a note, and turn it off.
 void note_off(int time, int chan, int key, int velo)
 {
     int n;
@@ -183,7 +165,6 @@ void note_off(int time, int chan, int key, int velo)
     }
 }
 
-// Find an unused voice, and use it to play a note.
 void note_on(int time, int chan, int key, int velo)
 {
     if (velo == 0) {
@@ -235,23 +216,6 @@ void pitch_wheel_change(int time, int chan, int value)
     }
 }
 
-uint8_t notes[] = { 60,62,64,65,67,69,71,72,71,69,67,65,64,62,60,0 };
-uint8_t num = sizeof notes / sizeof notes[0] - 1;
-void TIM2_IRQHandler(void)
-{
-    TIM2->SR &= ~TIM_SR_UIF;    
-
-    midi_play();
-}
-
-// Configure timer 2 so that it invokes the Update interrupt
-// every n microseconds.  To do so, set the prescaler to divide
-// by 48.  Then the CNT will count microseconds up to the ARR value.
-// Basically ARR = n-1
-// Set the ARPE bit in the CR1 so that the timer waits until the next
-// update before changing the effective ARR value.
-// Call NVIC_SetPriority() to set a low priority for Timer 2 interrupt.
-// See the lab 6 text to understand how to do so.
 void init_tim2(int n) {
     RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
     TIM2->PSC = 47;
@@ -261,21 +225,32 @@ void init_tim2(int n) {
     NVIC->ISER[0] |= 1 << 15;
     TIM2->CR1 |= TIM_CR1_ARPE;
 
-    //NVIC_SetPriority(TIM2_IRQn, 3);
-
     TIM2->CR1 |= TIM_CR1_CEN;
+}
+
+void TIM2_IRQHandler(void)
+{
+    TIM2->SR &= ~TIM_SR_UIF;    
+
+    midi_play();
+}
+
+void new_game(){
+    LCD_Clear(0);
+    LCD_DrawString(90,100, YELLOW, BLACK, "NEW GAME:", 16, 1);
+    LCD_DrawString(20,120, YELLOW, BLACK, "Press Any Button To Play!", 16, 1);
+    while(start_game == 0);
 }
 
 int main(void)
 {
-    //setup_buttons();
     init_button();
     LCD_Setup(); // this will call init_lcd_spi()
-    basic_drawing();
-    //move_ball();
-    LCD_DrawPicture(0,0,&background);
-    update(x,y);
     init_tim7();
+    new_game();
+    LCD_DrawPicture(0,0,&background);
+    enable_physics();
+    
 
     init_wavetable_hybrid2();
     init_dac();
