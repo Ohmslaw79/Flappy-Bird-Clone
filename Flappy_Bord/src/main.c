@@ -4,6 +4,11 @@
 #include "midi.h"
 #include "midiplay.h"
 #include <stdlib.h>
+#include "bird1.c"
+#include "bird2.c"
+#include "bird3.c"
+#include "brick_wall.c"
+#include "backgroundFlappy.c"
 
 #define VOICES 15
 
@@ -28,8 +33,16 @@
 #define PIPE_HEIGHT 0
 #define PIPE_WIDTH 0
 
+#define BIRD ball
+#define PIPE_TOP brick_wall
+#define PIPE_BOTTOM brick_wall
+
 extern const Picture background; // A 240x320 background image
 extern const Picture ball; // A 19x19 purple ball with white boundaries
+extern const Picture bird1;
+extern const Picture bird2;
+extern const Picture bird3;
+extern const Picture brick_wall;
 
 int bird_x = NEW_GAME_START_X;
 int bird_y = NEW_GAME_START_Y;
