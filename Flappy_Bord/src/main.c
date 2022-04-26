@@ -34,7 +34,6 @@
 #define PIPE_WIDTH 0
 
 #define BACKGROUND backgroundFlappy
-#define BIRD bird1
 #define PIPE_TOP brick_wall
 #define PIPE_BOTTOM brick_wall
 
@@ -47,6 +46,8 @@ extern const Picture backgroundFlappy;
 int bird_x = NEW_GAME_START_X;
 int bird_y = NEW_GAME_START_Y;
 int bird_v = 0; //velocity
+int bird_state = 1; //1 = normal, 2= flapping, 3= dead
+Picture* bird_pic = &bird1;
 char physics_enabled = 0;
 char start_game = 0;
 int player_score = 0;
@@ -119,6 +120,11 @@ void init_tim7(){
 
 void TIM7_IRQHandler(){ //LCD update and physics calculations
     TIM7->SR &= ~TIM_SR_UIF;
+    int animation_counter = 0;
+    if(bird_state == 1){
+        bird_pic = &bird1;
+    }
+    else if(bird_state == 2)
     if(physics_enabled){
         int dv = bird_v<=MAX_DOWNWARD_VELOCITY? 0 : -1;
         bird_v += dv;
@@ -142,7 +148,7 @@ void draw_bird(int x, int y)
 {
     TempPicturePtr(tmp, BIRD_WIDTH + BIRD_HORIZONTAL_PAD,BIRD_HEIGHT + BIRD_VERTICAL_PAD); // Create a temporary 50x50 image.
     pic_subset(tmp, &BACKGROUND, x-tmp->width/2, y-tmp->height/2); // Copy the background
-    pic_overlay(tmp, BIRD_HORIZONTAL_PAD / 2,BIRD_VERTICAL_PAD / 2, &BIRD, BIRD.transparent); // Overlay the ball
+    pic_overlay(tmp, BIRD_HORIZONTAL_PAD / 2,BIRD_VERTICAL_PAD / 2, bird_pic, bird_pic->transparent); // Overlay the ball
     LCD_DrawPicture(x-tmp->width/2,y-tmp->height/2, tmp); // Draw
 }
 
