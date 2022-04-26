@@ -29,7 +29,9 @@
 #define PIPE_WIDTH 0
 
 extern const Picture background; // A 240x320 background image
-extern const Picture ball; // A 19x19 purple ball with white boundaries
+extern const Picture f1; // A 19x19 purple ball with white boundaries
+extern const Picture f2;
+extern const Picture f3;
 
 int bird_x = NEW_GAME_START_X;
 int bird_y = NEW_GAME_START_Y;
@@ -88,6 +90,7 @@ void init_button(){
     NVIC->ISER[0] |= 1<<7;
 }
 
+
 void EXTI4_15_IRQHandler(){
     EXTI->PR |= EXTI_PR_PR6;
     start_game = 1;
@@ -112,7 +115,19 @@ void TIM7_IRQHandler(){ //LCD update and physics calculations
         bird_v += dv;
         int dy = (bird_y > LOWER_SCREEN_BOUND && bird_v < 0) || (bird_y < UPPER_SCREEN_BOUND && bird_v > 0) ? 0 : bird_v/VELOCITY_MODIFIER;
         bird_y -= dy;
-        draw_bird(bird_x,bird_y); //TODO - Add in pipe drawing, timing, and spacing logic
+        draw_bird1(bird_x,bird_y); //TODO - Add in pipe drawing, timing, and spacing logic
+        if(bird_v != 0)
+        {
+            for(int i = 0; i < 9000; i++);
+            draw_bird2(bird_x,bird_y); //TODO - Add in pipe drawing, timing, and spacing logic
+            for(int j = 0; j < 9000; j++);
+            draw_bird3(bird_x,bird_y); //TODO - Add in pipe drawing, timing, and spacing logic
+            for(int k = 0; k < 9000; k++);
+            draw_bird2(bird_x,bird_y); //TODO - Add in pipe drawing, timing, and spacing logic
+            for(int l = 0; l < 9000; l++);
+            draw_bird1(bird_x,bird_y); //TODO - Add in pipe drawing, timing, and spacing logic
+        }
+
     }
 }
 
@@ -126,11 +141,33 @@ void disable_physics(){
 
 #define TempPicturePtr(name,width,height) Picture name[(width)*(height)/6+2] = { {width,height,2} }
 
-void draw_bird(int x, int y)
+void draw_bird1(int x, int y)
 {
     TempPicturePtr(tmp, BIRD_WIDTH + BIRD_HORIZONTAL_PAD,BIRD_HEIGHT + BIRD_VERTICAL_PAD); // Create a temporary 50x50 image.
     pic_subset(tmp, &background, x-tmp->width/2, y-tmp->height/2); // Copy the background
-    pic_overlay(tmp, BIRD_HORIZONTAL_PAD / 2,BIRD_VERTICAL_PAD / 2, &ball, ball.transparent); // Overlay the ball
+    pic_overlay(tmp, BIRD_HORIZONTAL_PAD / 2,BIRD_VERTICAL_PAD / 2, &f1, f1.transparent); // Overlay the ball
+
+    //pic_overlay(tmp, BIRD_HORIZONTAL_PAD / 2,BIRD_VERTICAL_PAD / 2, &f2, f2.transparent); // Overlay the ball
+    LCD_DrawPicture(x-tmp->width/2,y-tmp->height/2, tmp); // Draw
+}
+
+void draw_bird2(int x, int y)
+{
+    TempPicturePtr(tmp, BIRD_WIDTH + BIRD_HORIZONTAL_PAD,BIRD_HEIGHT + BIRD_VERTICAL_PAD); // Create a temporary 50x50 image.
+    pic_subset(tmp, &background, x-tmp->width/2, y-tmp->height/2); // Copy the background
+    pic_overlay(tmp, BIRD_HORIZONTAL_PAD / 2,BIRD_VERTICAL_PAD / 2, &f2, f2.transparent); // Overlay the ball
+
+    //pic_overlay(tmp, BIRD_HORIZONTAL_PAD / 2,BIRD_VERTICAL_PAD / 2, &f2, f2.transparent); // Overlay the ball
+    LCD_DrawPicture(x-tmp->width/2,y-tmp->height/2, tmp); // Draw
+}
+
+void draw_bird3(int x, int y)
+{
+    TempPicturePtr(tmp, BIRD_WIDTH + BIRD_HORIZONTAL_PAD,BIRD_HEIGHT + BIRD_VERTICAL_PAD); // Create a temporary 50x50 image.
+    pic_subset(tmp, &background, x-tmp->width/2, y-tmp->height/2); // Copy the background
+    pic_overlay(tmp, BIRD_HORIZONTAL_PAD / 2,BIRD_VERTICAL_PAD / 2, &f3, f3.transparent); // Overlay the ball
+
+    //pic_overlay(tmp, BIRD_HORIZONTAL_PAD / 2,BIRD_VERTICAL_PAD / 2, &f2, f2.transparent); // Overlay the ball
     LCD_DrawPicture(x-tmp->width/2,y-tmp->height/2, tmp); // Draw
 }
 
