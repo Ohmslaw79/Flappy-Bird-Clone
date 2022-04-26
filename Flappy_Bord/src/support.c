@@ -105,7 +105,7 @@ void move_ball(void) //REMOVE
     LCD_DrawPicture(0,0,&background);
     int x = 120;
     int y = 160;
-    update(x,y);
+    update2(x,y);
     for(;;)
         for(int c=0; c<4; c++) {
             int dx=0;
@@ -149,7 +149,7 @@ void move_ball(void) //REMOVE
             if (dx !=0 || dy != 0) {
                 x += dx;
                 y += dy;
-                update(x,y);
+                update2(x,y);
             }
         }
 }
