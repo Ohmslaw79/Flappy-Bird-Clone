@@ -323,7 +323,7 @@ int main(void)
         if(bird_y > 350){
             start_game = 0;
             disable_physics();
-            stop_music();
+            stop_music(); //TODO - Figure out how to restart song from beginning
             new_game();
         }
         // If we hit the end of the MIDI file, start over.
