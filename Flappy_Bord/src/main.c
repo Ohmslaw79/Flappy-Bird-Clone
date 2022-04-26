@@ -116,15 +116,15 @@ void TIM7_IRQHandler(){ //LCD update and physics calculations
         int dy = (bird_y > LOWER_SCREEN_BOUND && bird_v < 0) || (bird_y < UPPER_SCREEN_BOUND && bird_v > 0) ? 0 : bird_v/VELOCITY_MODIFIER;
         bird_y -= dy;
         draw_bird1(bird_x,bird_y); //TODO - Add in pipe drawing, timing, and spacing logic
-        if(bird_v != 0)
+        if(bird_v == JUMP_VELOCITY)
         {
-            for(int i = 0; i < 9000; i++);
+            for(int i = 0; i < 10000; i++);
             draw_bird2(bird_x,bird_y); //TODO - Add in pipe drawing, timing, and spacing logic
-            for(int j = 0; j < 9000; j++);
+            for(int j = 0; j <109000; j++);
             draw_bird3(bird_x,bird_y); //TODO - Add in pipe drawing, timing, and spacing logic
-            for(int k = 0; k < 9000; k++);
+            for(int k = 0; k < 10000; k++);
             draw_bird2(bird_x,bird_y); //TODO - Add in pipe drawing, timing, and spacing logic
-            for(int l = 0; l < 9000; l++);
+            for(int l = 0; l < 10000; l++);
             draw_bird1(bird_x,bird_y); //TODO - Add in pipe drawing, timing, and spacing logic
         }
 
