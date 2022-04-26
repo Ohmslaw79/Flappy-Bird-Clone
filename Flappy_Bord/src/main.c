@@ -24,15 +24,14 @@
 
 #define BIRD_HEIGHT 24
 #define BIRD_WIDTH 34
-#define PIPE_HEIGHT 0
-#define PIPE_WIDTH 0
+#define PIPE_HEIGHT 235
+#define PIPE_WIDTH 40
 
 #define BACKGROUND backgroundFlappy
 #define PIPE_TOP brick_wall
 #define PIPE_BOTTOM brick_wall
 
 extern const Picture bird1;
-extern const Picture bird2;
 extern const Picture bird3;
 extern const Picture brick_wall;
 extern const Picture backgroundFlappy;
@@ -131,6 +130,29 @@ void TIM7_IRQHandler(){ //LCD update and physics calculations
         }
     }
 }
+
+
+void endGame()
+{
+    start_game = 0;
+    disable_physics();
+    stop_music(); //TODO - Figure out how to restart song from beginning
+    new_game();
+}
+
+void collisionDetection()
+{
+    //Case 0 (Bird hits bottom)
+    if(bird_y >= 281) endGame();
+    //Case 1 (Bird hits top)
+    else if (bird_y <= 0) endGame();
+    //Case 2 (Bird hits left side of bottom pipe)
+    //Case 3 (Bird hits top side of the bottom pipe)
+    //Case 4 (Bird hits left side of top pipe)
+    //Case 5 (Bird hits bottom of top pipe)
+}
+
+
 
 void enable_physics(){
     physics_enabled = 1;
@@ -248,7 +270,7 @@ void note_on(int time, int chan, int key, int velo)
         }
     }
 }
-
+extern const Picture brick_wall;
 void set_tempo(int time, int value, const MIDI_Header *hdr)
 {
     // This assumes that the TIM2 prescaler divides by 48.
@@ -367,16 +389,14 @@ int main(void)
     init_tim6();
     MIDI_Player *mp = midi_init(midifile);
     init_tim2(10417);
+    char flag = '0';
 
     new_game();
     for(;;) {
-        if(bird_y > 350){
-            start_game = 0;
-            disable_physics();
-            stop_music(); //TODO - Figure out how to restart song from beginning
-            new_game();
+        if(physics_enabled)
+        {
+            collisionDetection();
         }
-        // If we hit the end of the MIDI file, start over.
         if (mp->nexttick == MAXTICKS)
             mp = midi_init(midifile);
     }
