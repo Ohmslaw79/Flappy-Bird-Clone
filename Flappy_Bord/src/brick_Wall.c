@@ -1,12 +1,13 @@
 /* GIMP RGBA C-Source image dump (brick_Wall.c) */
 
 const struct {
-  guint  	 width;
-  guint  	 height;
-  guint  	 bytes_per_pixel; /* 2:RGB16, 3:RGB, 4:RGBA */ 
-  guint8 	 pixel_data[40 * 235 * 2 + 1];
+  unsigned int 	 width;
+  unsigned int 	 height;
+  unsigned int 	 bytes_per_pixel; /* 2:RGB16, 3:RGB, 4:RGBA */ 
+  int            transparent;
+  unsigned char	 pixel_data[40 * 235 * 2 + 1];
 } brick_wall = {
-  40, 235, 2,
+  40, 235, 2, 0xFFFF,
   "F\313F\313F\313F\313F\313F\313F\313F\313F\313F\313F\313F\313F\313F\313F\313"
   "f\323\204\232Fb+\324%\313F\313F\313F\313F\313F\313F\313F\313F\313F\313F\313"
   "F\313F\313F\313F\313F\313F\313F\313F\313F\313F\313F\313F\313F\313F\313F\313"
