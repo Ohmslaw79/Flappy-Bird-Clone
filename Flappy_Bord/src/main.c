@@ -41,6 +41,7 @@ int high_score = 0;
 unsigned int seed = 0;
 
 
+
 uint8_t notes[] = { 60,62,64,65,67,69,71,72,71,69,67,65,64,62,60,0 };
 uint8_t num = sizeof notes / sizeof notes[0] - 1;
 char music_playing = 0;
@@ -284,16 +285,38 @@ void TIM2_IRQHandler(void)
     midi_play();
 }
 
+void draw_num(u16 x,u16 y,u16 fc, u16 bc, int num, u8 size, u8 mode){
+    int tempnum = num;
+    int digits = 0;
+    int tens = 1;
+    do{
+        digits++;
+        tens *= 10;
+        tempnum -= tempnum % tens;
+
+    }while(tempnum > 0);
+    tens = 1;
+    for(int i = 1; i <= digits; i++){
+        LCD_DrawChar(x + 8*(digits-i),y,fc,bc,num % 10 + 48, size, mode);
+        num -= num % 10;
+        num /= 10;
+    }
+}
+
 void new_game(){
     LCD_Clear(0);
     int current_line = 90;
     if(seed > 0) { 
-        LCD_DrawString(90,current_line, YELLOW, BLACK, "YOUR SCORE: " + player_score, 16, 1);
+        LCD_DrawString(90,current_line, YELLOW, BLACK, "GAME OVER!" + player_score, 16, 1);
+        current_line += 20;
+        LCD_DrawString(85,current_line, YELLOW, BLACK, "YOUR SCORE: ", 16, 1);
+        draw_num(178,current_line, YELLOW, BLACK, player_score, 16, 1);
         current_line += 20;
     }
-    LCD_DrawString(90,current_line, YELLOW, BLACK, "HIGH SCORE: " + high_score, 16, 1);
+    LCD_DrawString(85,current_line, YELLOW, BLACK, "HIGH SCORE: ", 16, 1);
+    draw_num(178,current_line, YELLOW, BLACK, high_score, 16, 1);
     current_line += 40;
-    LCD_DrawString(90,current_line, YELLOW, BLACK, "NEW GAME:", 16, 1);
+    LCD_DrawString(90,current_line, YELLOW, BLACK, seed? "NEW GAME?":"NEW GAME:", 16, 1);
     current_line += 20;
     LCD_DrawString(20,current_line, YELLOW, BLACK, "Press Any Button To Play!", 16, 1);
     bird_x = NEW_GAME_START_X;
