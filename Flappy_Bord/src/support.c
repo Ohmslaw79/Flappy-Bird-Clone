@@ -76,9 +76,9 @@ extern const Picture ball; // A 19x19 purple ball with white boundaries //REMOVE
 // an image of the specified size.
 // BE CAREFUL HOW LARGE OF A PICTURE YOU TRY TO CREATE:
 // A 100x100 picture uses 20000 bytes.  You have 32768 bytes of SRAM.
-#define TempPicturePtr(name,width,height) Picture name[(width)*(height)/6+2] = { {width,height,2} }
+#define TempPicturePtr(name,width,height) Picture name[(width)*(height)/6+2] = { {width,height,2} } //REMOVE
 
-void erase(int x, int y)
+void erase(int x, int y) //REMOVE
 {
     TempPicturePtr(tmp,29,29); // Create a temporary 29x29 image.
     pic_subset(tmp, &background, x-tmp->width/2, y-tmp->height/2); // Copy the background

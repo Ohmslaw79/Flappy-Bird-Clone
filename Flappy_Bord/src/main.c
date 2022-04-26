@@ -305,24 +305,26 @@ void draw_num(u16 x,u16 y,u16 fc, u16 bc, int num, u8 size, u8 mode){
 
 void new_game(){
     LCD_Clear(0);
-    int current_line = 90;
+    int current_line = 50;
+
     if(seed > 0) { 
         LCD_DrawString(90,current_line, YELLOW, BLACK, "GAME OVER!" + player_score, 16, 1);
-        current_line += 20;
-        LCD_DrawString(85,current_line, YELLOW, BLACK, "YOUR SCORE: ", 16, 1);
-        draw_num(178,current_line, YELLOW, BLACK, player_score, 16, 1);
+        current_line += 30;
+        LCD_DrawString(80,current_line, YELLOW, BLACK, "YOUR SCORE: ", 16, 1);
+        draw_num(173,current_line, YELLOW, BLACK, player_score, 16, 1);
         current_line += 20;
     }
-    LCD_DrawString(85,current_line, YELLOW, BLACK, "HIGH SCORE: ", 16, 1);
-    draw_num(178,current_line, YELLOW, BLACK, high_score, 16, 1);
+    LCD_DrawString(80,current_line, YELLOW, BLACK, "HIGH SCORE: ", 16, 1);
+    draw_num(173,current_line, YELLOW, BLACK, high_score, 16, 1);
     current_line += 40;
     LCD_DrawString(90,current_line, YELLOW, BLACK, seed? "NEW GAME?":"NEW GAME:", 16, 1);
     current_line += 20;
     LCD_DrawString(20,current_line, YELLOW, BLACK, "Press Any Button To Play!", 16, 1);
+
     bird_x = NEW_GAME_START_X;
     bird_y = NEW_GAME_START_Y;
     while(start_game == 0){
-        seed >= UINTMAX_MAX ? 0 : seed++;
+        seed >= UINTMAX_MAX ? 1 : seed++;
     }
     srand(seed);
     LCD_DrawPicture(0,0,&background);
