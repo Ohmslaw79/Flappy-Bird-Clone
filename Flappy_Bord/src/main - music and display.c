@@ -20,6 +20,7 @@ extern const Picture ball; // A 19x19 purple ball with white boundaries
 
 int x = 120;
 int y = 160;
+int v = 0;
 
 // An array of "voices".  Each voice can be used to play a different note.
 // Each voice can be associated with a channel (explained later).
@@ -79,8 +80,8 @@ void init_tim7(){
 
 void TIM7_IRQHandler(){
     TIM7->SR &= ~TIM_SR_UIF;
-    move_ball_physics(&x,&y,&v)
-    move_ball_timer(&x, &y);
+    move_ball_physics(&x,&y,&v);
+    //move_ball_timer(&x, &y);
 }
 
 // We'll use the Timer 6 IRQ to recompute samples and feed those

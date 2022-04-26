@@ -6,6 +6,7 @@
 #include <stdlib.h>
 
 #define VOICES 15
+
 #define UPDATE_RATE 30 //In updates per second
 #define GRAVITY -5/1000
 #define UPPER_SCREEN_BOUND 0
@@ -13,22 +14,32 @@
 #define MAX_DOWNWARD_VELOCITY -12
 #define VELOCITY_MODIFIER 2
 #define JUMP_VELOCITY 15
-#define HORIZONTAL_REDRAW_PAD 0
-#define VERTICAL_REDRAW_PAD 16
+
+#define PIPE_HORIZONTAL_PAD 0
+#define PIPE_VERTICAL_PAD
+#define BIRD_VERTICAL_PAD 16
+#define BIRD_HORIZONTAL_PAD 16
+#define BIRD_HEIGHT 50
+#define BIRD_WIDTH 50
+#define PIPE_HEIGHT 0
+#define PIPE_WIDTH 0
 
 extern const Picture background; // A 240x320 background image
 extern const Picture ball; // A 19x19 purple ball with white boundaries
 
-int x = 100;
-int y = 160;
+int bird_x = 100;
+int bird_y = 160;
 int v = 0; //velocity
 char physics_enabled = 0;
 char start_game = 0;
-int current_score = 0;
+int player_score = 0;
 int high_score = 0;
+unsigned int seed = 0;
+
 
 uint8_t notes[] = { 60,62,64,65,67,69,71,72,71,69,67,65,64,62,60,0 };
 uint8_t num = sizeof notes / sizeof notes[0] - 1;
+char music_playing = 0;
 
 struct {
     uint8_t in_use;
@@ -95,9 +106,9 @@ void TIM7_IRQHandler(){ //LCD update and physics calculations
     if(physics_enabled){
         int dv = v<=MAX_DOWNWARD_VELOCITY? 0 : -1;
         v += dv;
-        int dy = (y > LOWER_SCREEN_BOUND && v < 0) || (y < UPPER_SCREEN_BOUND && v > 0) ? 0 : v/VELOCITY_MODIFIER;
-        y -= dy;
-        draw_bird(x,y);
+        int dy = (bird_y > LOWER_SCREEN_BOUND && v < 0) || (bird_y < UPPER_SCREEN_BOUND && v > 0) ? 0 : v/VELOCITY_MODIFIER;
+        bird_y -= dy;
+        draw_bird(bird_x,bird_y); //TODO - Add in pipe drawing, timing, and spacing logic
     }
 }
 
@@ -113,15 +124,25 @@ void disable_physics(){
 
 void draw_bird(int x, int y)
 {
-    TempPicturePtr(tmp, 50 + HORIZONTAL_REDRAW_PAD,50 + VERTICAL_REDRAW_PAD); // Create a temporary 50x50 image.
+    TempPicturePtr(tmp, BIRD_WIDTH + BIRD_HORIZONTAL_PAD,BIRD_HEIGHT + BIRD_VERTICAL_PAD); // Create a temporary 50x50 image.
     pic_subset(tmp, &background, x-tmp->width/2, y-tmp->height/2); // Copy the background
-    pic_overlay(tmp, HORIZONTAL_REDRAW_PAD / 2,VERTICAL_REDRAW_PAD / 2, &ball, ball.transparent); // Overlay the ball
+    pic_overlay(tmp, BIRD_HORIZONTAL_PAD / 2,BIRD_VERTICAL_PAD / 2, &ball, ball.transparent); // Overlay the ball
     LCD_DrawPicture(x-tmp->width/2,y-tmp->height/2, tmp); // Draw
 }
 
-void draw_pipes(int x, int y, int spacing){
+// void draw_top_pipe(int x, int y){ //TODO - Figure out why these freak out TempPicturePtr
+//     TempPicturePtr(tmp, PIPE_WIDTH + PIPE_HORIZONTAL_PAD,PIPE_HEIGHT + PIPE_VERTICAL_PAD); // Create a temporary 50x50 image.
+//     pic_subset(tmp, &background, x-tmp->width/2, y-tmp->height/2); // Copy the background
+//     pic_overlay(tmp, PIPE_HORIZONTAL_PAD / 2,PIPE_VERTICAL_PAD / 2, &ball, ball.transparent); // Overlay the ball //TODO - REPLACE BALL w/ pipe top
+//     LCD_DrawPicture(x-tmp->width/2,y-tmp->height/2, tmp); // Draw
+// }
 
-}
+// void draw_bottom_pipe(int x, int y){
+//     TempPicturePtr(tmp, PIPE_WIDTH + PIPE_HORIZONTAL_PAD,PIPE_HEIGHT + PIPE_VERTICAL_PAD); // Create a temporary 50x50 image.
+//     pic_subset(tmp, &background, x-tmp->width/2, y-tmp->height/2); // Copy the background
+//     pic_overlay(tmp, PIPE_HORIZONTAL_PAD / 2,PIPE_VERTICAL_PAD / 2, &ball, ball.transparent); // Overlay the ball //TODO - REPLACE BALL w/ pipe bottom
+//     LCD_DrawPicture(x-tmp->width/2,y-tmp->height/2, tmp); // Draw
+// }
 
 void init_tim6(void)
 {
@@ -240,8 +261,16 @@ void init_tim2(int n) {
     TIM2->DIER |= TIM_DIER_UIE;
     NVIC->ISER[0] |= 1 << 15;
     TIM2->CR1 |= TIM_CR1_ARPE;
+}
 
+void start_music(){
+    music_playing = 1;
     TIM2->CR1 |= TIM_CR1_CEN;
+}
+
+void stop_music(){
+    music_playing = 0;
+    TIM2->CR1 &= ~TIM_CR1_CEN; //TODO - Figure out how to stop note currently playing
 }
 
 void TIM2_IRQHandler(void)
@@ -252,12 +281,19 @@ void TIM2_IRQHandler(void)
 }
 
 void new_game(){
-    unsigned int seed = 0;
     LCD_Clear(0);
-    LCD_DrawString(90,100, YELLOW, BLACK, "NEW GAME:", 16, 1);
-    LCD_DrawString(20,120, YELLOW, BLACK, "Press Any Button To Play!", 16, 1);
+    int current_line = 90;
+    if(seed > 0) { 
+        LCD_DrawString(90,current_line, YELLOW, BLACK, "YOUR SCORE: " + player_score, 16, 1);
+        current_line += 20;
+    }
+    LCD_DrawString(90,current_line, YELLOW, BLACK, "HIGH SCORE: " + high_score, 16, 1);
+    current_line += 40;
+    LCD_DrawString(90,current_line, YELLOW, BLACK, "NEW GAME:", 16, 1);
+    current_line += 20;
+    LCD_DrawString(20,current_line, YELLOW, BLACK, "Press Any Button To Play!", 16, 1);
     while(start_game == 0){
-        seed >= UINT_MAX ? 0 : seed++;
+        seed >= UINTMAX_MAX ? 0 : seed++;
     }
     srand(seed);
 }
@@ -267,19 +303,25 @@ int main(void)
     init_button();
     LCD_Setup(); // this will call init_lcd_spi()
     init_tim7();
-    new_game();
-    LCD_DrawPicture(0,0,&background);
-    enable_physics();
-    
+
     init_wavetable_hybrid2();
     init_dac();
     init_tim6();
     MIDI_Player *mp = midi_init(midifile);
-    // The default rate for a MIDI file is 2 beats per second
-    // with 48 ticks per beat.  That's 500000/48 microseconds.
     init_tim2(10417);
+
+    new_game();
+    LCD_DrawPicture(0,0,&background);
+    enable_physics();
+    start_music();
+    
     for(;;) {
-        asm("wfi");
+        if(bird_y > 350){
+            stop_music();
+        }
+        else if(bird_y < 350 && !music_playing){
+            start_music();
+        }
         // If we hit the end of the MIDI file, start over.
         if (mp->nexttick == MAXTICKS)
             mp = midi_init(midifile);

@@ -3,18 +3,18 @@
 #include <stdlib.h>
 #include "lcd.h"
 
-static void nano_wait(unsigned int n) {
+static void nano_wait(unsigned int n) {//REMOVE
     asm(    "        mov r0,%0\n"
             "repeat: sub r0,#83\n"
             "        bgt repeat\n" : : "r"(n) : "r0", "cc");
 }
 
-void drive_column(int c)
+void drive_column(int c)//REMOVE
 {
     GPIOC->BSRR = 0xf00000 | ~(1 << (c + 4));
 }
 
-int read_rows()
+int read_rows()//REMOVE
 {
     return (~GPIOC->IDR) & 0xf;
 }
@@ -67,8 +67,8 @@ void pic_overlay(Picture *dst, int xoffset, int yoffset, const Picture *src, int
     }
 }
 
-extern const Picture background; // A 240x320 background image
-extern const Picture ball; // A 19x19 purple ball with white boundaries
+extern const Picture background; // A 240x320 background image//REMOVE
+extern const Picture ball; // A 19x19 purple ball with white boundaries //REMOVE
 
 // This C macro will create an array of Picture elements.
 // Really, you'll just use it as a pointer to a single Picture
@@ -86,12 +86,12 @@ void erase(int x, int y)
     LCD_DrawPicture(x-tmp->width/2,y-tmp->height/2, tmp); // Draw
 }
 
-void update(int x, int y)
+void update(int x, int y) //REMOVE
 {
     LCD_DrawPicture(x-ball.width/2,y-ball.height/2, &ball); // Draw the ball
 }
 
-void update2(int x, int y)
+void update2(int x, int y)//REMOVE
 {
     TempPicturePtr(tmp,70,70); // Create a temporary 50x50 image.
     pic_subset(tmp, &background, x-tmp->width/2, y-tmp->height/2); // Copy the background
@@ -99,7 +99,7 @@ void update2(int x, int y)
     LCD_DrawPicture(x-tmp->width/2,y-tmp->height/2, tmp); // Draw
 }
 
-void move_ball(void)
+void move_ball(void) //REMOVE
 {
     // Draw the background.
     LCD_DrawPicture(0,0,&background);
@@ -155,7 +155,7 @@ void move_ball(void)
 }
 
 
-void basic_drawing(void)
+void basic_drawing(void) //REMOVE
 {
     LCD_Clear(0);
     LCD_DrawRectangle(10, 10, 30, 50, GREEN);
