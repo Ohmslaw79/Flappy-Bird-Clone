@@ -18,20 +18,21 @@
 #define VELOCITY_MODIFIER 2
 #define JUMP_VELOCITY 15
 
-#define PIPE_HORIZONTAL_PAD 0
-#define PIPE_VERTICAL_PAD
+#define PIPE_HORIZONTAL_PAD 14
+#define PIPE_VERTICAL_PAD 80
 #define BIRD_VERTICAL_PAD 16
 #define BIRD_HORIZONTAL_PAD 16
 
 #define BIRD_HEIGHT 50
 #define BIRD_WIDTH 50
-#define PIPE_HEIGHT 0
-#define PIPE_WIDTH 0
+#define PIPE_HEIGHT 235
+#define PIPE_WIDTH 40
 
 extern const Picture background; // A 240x320 background image
 extern const Picture f1; // A 19x19 purple ball with white boundaries
 extern const Picture f2;
 extern const Picture f3;
+extern const Picture brick_wall;
 
 int bird_x = NEW_GAME_START_X;
 int bird_y = NEW_GAME_START_Y;
@@ -118,16 +119,11 @@ void TIM7_IRQHandler(){ //LCD update and physics calculations
         draw_bird1(bird_x,bird_y); //TODO - Add in pipe drawing, timing, and spacing logic
         if(bird_v == JUMP_VELOCITY)
         {
-            for(int i = 0; i < 10000; i++);
-            draw_bird2(bird_x,bird_y); //TODO - Add in pipe drawing, timing, and spacing logic
-            for(int j = 0; j <10000; j++);
+            for(int i = 0; i < 5000; i++);
             draw_bird3(bird_x,bird_y); //TODO - Add in pipe drawing, timing, and spacing logic
-            for(int k = 0; k < 10000; k++);
-            draw_bird2(bird_x,bird_y); //TODO - Add in pipe drawing, timing, and spacing logic
-            for(int l = 0; l < 10000; l++);
+            for(int j = 0; j <20000; j++);
             draw_bird1(bird_x,bird_y); //TODO - Add in pipe drawing, timing, and spacing logic
         }
-
     }
 }
 
@@ -141,6 +137,13 @@ void disable_physics(){
 
 #define TempPicturePtr(name,width,height) Picture name[(width)*(height)/6+2] = { {width,height,2} }
 
+void draw_pipe(int x, int y)
+{
+    TempPicturePtr(tmp, PIPE_WIDTH + PIPE_HORIZONTAL_PAD, PIPE_HEIGHT + PIPE_VERTICAL_PAD);
+    pic_subset(tmp, &background, x-tmp->width/2, y-tmp->height/2); // Copy the background
+    pic_overlay(tmp, PIPE_HORIZONTAL_PAD / 2, PIPE_VERTICAL_PAD / 2, &brick_wall, brick_wall.transparent);
+
+}
 void draw_bird1(int x, int y)
 {
     TempPicturePtr(tmp, BIRD_WIDTH + BIRD_HORIZONTAL_PAD,BIRD_HEIGHT + BIRD_VERTICAL_PAD); // Create a temporary 50x50 image.
