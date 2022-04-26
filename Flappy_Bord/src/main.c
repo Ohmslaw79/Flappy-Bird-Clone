@@ -4,11 +4,11 @@
 #include "midi.h"
 #include "midiplay.h"
 #include <stdlib.h>
-#include "bird1.c"
-#include "bird2.c"
-#include "bird3.c"
-#include "brick_wall.c"
-#include "backgroundFlappy.c"
+// #include "bird1.c"
+// #include "bird2.c"
+// #include "bird3.c"
+// #include "brick_wall.c"
+// #include "backgroundFlappy.c"
 
 #define VOICES 15
 
@@ -33,16 +33,16 @@
 #define PIPE_HEIGHT 0
 #define PIPE_WIDTH 0
 
-#define BIRD ball
+#define BACKGROUND backgroundFlappy
+#define BIRD bird1
 #define PIPE_TOP brick_wall
 #define PIPE_BOTTOM brick_wall
 
-extern const Picture background; // A 240x320 background image
-extern const Picture ball; // A 19x19 purple ball with white boundaries
 extern const Picture bird1;
 extern const Picture bird2;
 extern const Picture bird3;
 extern const Picture brick_wall;
+extern const Picture backgroundFlappy;
 
 int bird_x = NEW_GAME_START_X;
 int bird_y = NEW_GAME_START_Y;
@@ -52,8 +52,6 @@ char start_game = 0;
 int player_score = 0;
 int high_score = 0;
 unsigned int seed = 0;
-
-
 
 uint8_t notes[] = { 60,62,64,65,67,69,71,72,71,69,67,65,64,62,60,0 };
 uint8_t num = sizeof notes / sizeof notes[0] - 1;
@@ -143,8 +141,8 @@ void disable_physics(){
 void draw_bird(int x, int y)
 {
     TempPicturePtr(tmp, BIRD_WIDTH + BIRD_HORIZONTAL_PAD,BIRD_HEIGHT + BIRD_VERTICAL_PAD); // Create a temporary 50x50 image.
-    pic_subset(tmp, &background, x-tmp->width/2, y-tmp->height/2); // Copy the background
-    pic_overlay(tmp, BIRD_HORIZONTAL_PAD / 2,BIRD_VERTICAL_PAD / 2, &ball, ball.transparent); // Overlay the ball
+    pic_subset(tmp, &BACKGROUND, x-tmp->width/2, y-tmp->height/2); // Copy the background
+    pic_overlay(tmp, BIRD_HORIZONTAL_PAD / 2,BIRD_VERTICAL_PAD / 2, &BIRD, BIRD.transparent); // Overlay the ball
     LCD_DrawPicture(x-tmp->width/2,y-tmp->height/2, tmp); // Draw
 }
 
@@ -340,7 +338,7 @@ void new_game(){
         seed >= UINTMAX_MAX ? 1 : seed++;
     }
     srand(seed);
-    LCD_DrawPicture(0,0,&background);
+    LCD_DrawPicture(0,0,&BACKGROUND);
     enable_physics();
     start_music();
 }

@@ -1,12 +1,13 @@
 /* GIMP RGB C-Source image dump (backgroundFlappy.c) */
 
-static const struct {
+const struct {
   unsigned int 	 width;
   unsigned int 	 height;
   unsigned int 	 bytes_per_pixel; /* 2:RGB16, 3:RGB, 4:RGBA */ 
+  int            transparent;
   unsigned char	 pixel_data[240 * 320 * 2 + 1];
-} background = {
-  240, 320, 2,
+} backgroundFlappy = {
+  240, 320, 2, 0,
   "D\000D\000D\000D\000D\000D\000D\000D\000D\000D\000D\000D\000D\000D\000D\000D\000D\000D\000D\000D\000D\000D\000D\000D\000"
   "D\000D\000D\000D\000D\000D\000D\000D\000D\000D\000D\000D\000D\000D\000D\000D\000D\000D\000D\000D\000D\000D\000D\000D\000"
   "D\000D\000D\000D\000D\000D\000D\000D\000D\000D\000D\000D\000D\000D\000D\000D\000D\000D\000D\000D\000D\000D\000D\000D\000"
