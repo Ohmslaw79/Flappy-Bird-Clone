@@ -14,6 +14,8 @@
 #define MAX_DOWNWARD_VELOCITY -12
 #define VELOCITY_MODIFIER 2
 #define JUMP_VELOCITY 15
+#define NEW_GAME_START_X 90
+#define NEW_GAME_START_Y 160
 
 #define PIPE_HORIZONTAL_PAD 0
 #define PIPE_VERTICAL_PAD
@@ -27,9 +29,9 @@
 extern const Picture background; // A 240x320 background image
 extern const Picture ball; // A 19x19 purple ball with white boundaries
 
-int bird_x = 100;
-int bird_y = 160;
-int v = 0; //velocity
+int bird_x = NEW_GAME_START_X;
+int bird_y = NEW_GAME_START_Y;
+int bird_v = 0; //velocity
 char physics_enabled = 0;
 char start_game = 0;
 int player_score = 0;
@@ -87,7 +89,7 @@ void init_button(){
 void EXTI4_15_IRQHandler(){
     EXTI->PR |= EXTI_PR_PR6;
     start_game = 1;
-    v = JUMP_VELOCITY;
+    bird_v = JUMP_VELOCITY;
 }
 
 void init_tim7(){
@@ -104,9 +106,9 @@ void init_tim7(){
 void TIM7_IRQHandler(){ //LCD update and physics calculations
     TIM7->SR &= ~TIM_SR_UIF;
     if(physics_enabled){
-        int dv = v<=MAX_DOWNWARD_VELOCITY? 0 : -1;
-        v += dv;
-        int dy = (bird_y > LOWER_SCREEN_BOUND && v < 0) || (bird_y < UPPER_SCREEN_BOUND && v > 0) ? 0 : v/VELOCITY_MODIFIER;
+        int dv = bird_v<=MAX_DOWNWARD_VELOCITY? 0 : -1;
+        bird_v += dv;
+        int dy = (bird_y > LOWER_SCREEN_BOUND && bird_v < 0) || (bird_y < UPPER_SCREEN_BOUND && bird_v > 0) ? 0 : bird_v/VELOCITY_MODIFIER;
         bird_y -= dy;
         draw_bird(bird_x,bird_y); //TODO - Add in pipe drawing, timing, and spacing logic
     }
@@ -184,7 +186,6 @@ void init_dac(void)
     RCC->APB1ENR |= RCC_APB1ENR_DACEN;
 	DAC->CR &= ~(DAC_CR_TSEL1);
 	DAC->CR |= DAC_CR_TEN1;
-	DAC->CR |= DAC_CR_EN1;
     DMA1_Channel5->CNDTR = 23;
 }
 
@@ -261,16 +262,17 @@ void init_tim2(int n) {
     TIM2->DIER |= TIM_DIER_UIE;
     NVIC->ISER[0] |= 1 << 15;
     TIM2->CR1 |= TIM_CR1_ARPE;
+    TIM2->CR1 |= TIM_CR1_CEN;
 }
 
 void start_music(){
     music_playing = 1;
-    TIM2->CR1 |= TIM_CR1_CEN;
+    DAC->CR = DAC_CR_EN1;
 }
 
 void stop_music(){
     music_playing = 0;
-    TIM2->CR1 &= ~TIM_CR1_CEN; //TODO - Figure out how to stop note currently playing
+    DAC->CR &= ~DAC_CR_EN1;
 }
 
 void TIM2_IRQHandler(void)
@@ -292,10 +294,15 @@ void new_game(){
     LCD_DrawString(90,current_line, YELLOW, BLACK, "NEW GAME:", 16, 1);
     current_line += 20;
     LCD_DrawString(20,current_line, YELLOW, BLACK, "Press Any Button To Play!", 16, 1);
+    bird_x = NEW_GAME_START_X;
+    bird_y = NEW_GAME_START_Y;
     while(start_game == 0){
         seed >= UINTMAX_MAX ? 0 : seed++;
     }
     srand(seed);
+    LCD_DrawPicture(0,0,&background);
+    enable_physics();
+    start_music();
 }
 
 int main(void)
@@ -311,16 +318,13 @@ int main(void)
     init_tim2(10417);
 
     new_game();
-    LCD_DrawPicture(0,0,&background);
-    enable_physics();
-    start_music();
     
     for(;;) {
         if(bird_y > 350){
+            start_game = 0;
+            disable_physics();
             stop_music();
-        }
-        else if(bird_y < 350 && !music_playing){
-            start_music();
+            new_game();
         }
         // If we hit the end of the MIDI file, start over.
         if (mp->nexttick == MAXTICKS)
