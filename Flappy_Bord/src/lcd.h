@@ -2,8 +2,8 @@
 // lcd.h: Adapted from the lcdwiki.com examples.
 //============================================================================
 
-#ifndef __LCD_H
-#define __LCD_H
+#ifndef LCD_H_
+#define LCD_H_
 #include "stdlib.h"
 
 // shorthand notation for 8-bit and 16-bit unsigned integers
@@ -87,6 +87,7 @@ typedef struct {
     unsigned int   width;
     unsigned int   height;
     unsigned int   bytes_per_pixel; // 2:RGB16, 3:RGB, 4:RGBA
+    int            transparent;
     union {
     unsigned char  pixel_data[0]; // variable length array
     unsigned short pix2[0];
@@ -95,4 +96,4 @@ typedef struct {
 
 void LCD_DrawPicture(int x0, int y0, const Picture *pic);
 
-#endif
+#endif /* LCD_H_ */

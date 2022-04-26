@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include "midi.h"
 #include "midiplay.h"
+#include <stdlib.h>
 
 #define VOICES 15
 #define UPDATE_RATE 30 //In updates per second
@@ -12,6 +13,8 @@
 #define MAX_DOWNWARD_VELOCITY -12
 #define VELOCITY_MODIFIER 2
 #define JUMP_VELOCITY 15
+#define HORIZONTAL_REDRAW_PAD 0
+#define VERTICAL_REDRAW_PAD 16
 
 extern const Picture background; // A 240x320 background image
 extern const Picture ball; // A 19x19 purple ball with white boundaries
@@ -23,7 +26,6 @@ char physics_enabled = 0;
 char start_game = 0;
 int current_score = 0;
 int high_score = 0;
-
 
 uint8_t notes[] = { 60,62,64,65,67,69,71,72,71,69,67,65,64,62,60,0 };
 uint8_t num = sizeof notes / sizeof notes[0] - 1;
@@ -95,7 +97,7 @@ void TIM7_IRQHandler(){ //LCD update and physics calculations
         v += dv;
         int dy = (y > LOWER_SCREEN_BOUND && v < 0) || (y < UPPER_SCREEN_BOUND && v > 0) ? 0 : v/VELOCITY_MODIFIER;
         y -= dy;
-        update2(x,y);
+        draw_bird(x,y);
     }
 }
 
@@ -105,6 +107,20 @@ void enable_physics(){
 
 void disable_physics(){
     physics_enabled = 0;
+}
+
+#define TempPicturePtr(name,width,height) Picture name[(width)*(height)/6+2] = { {width,height,2} }
+
+void draw_bird(int x, int y)
+{
+    TempPicturePtr(tmp, 50 + HORIZONTAL_REDRAW_PAD,50 + VERTICAL_REDRAW_PAD); // Create a temporary 50x50 image.
+    pic_subset(tmp, &background, x-tmp->width/2, y-tmp->height/2); // Copy the background
+    pic_overlay(tmp, HORIZONTAL_REDRAW_PAD / 2,VERTICAL_REDRAW_PAD / 2, &ball, ball.transparent); // Overlay the ball
+    LCD_DrawPicture(x-tmp->width/2,y-tmp->height/2, tmp); // Draw
+}
+
+void draw_pipes(int x, int y, int spacing){
+
 }
 
 void init_tim6(void)
@@ -236,10 +252,14 @@ void TIM2_IRQHandler(void)
 }
 
 void new_game(){
+    unsigned int seed = 0;
     LCD_Clear(0);
     LCD_DrawString(90,100, YELLOW, BLACK, "NEW GAME:", 16, 1);
     LCD_DrawString(20,120, YELLOW, BLACK, "Press Any Button To Play!", 16, 1);
-    while(start_game == 0);
+    while(start_game == 0){
+        seed >= UINT_MAX ? 0 : seed++;
+    }
+    srand(seed);
 }
 
 int main(void)
@@ -251,7 +271,6 @@ int main(void)
     LCD_DrawPicture(0,0,&background);
     enable_physics();
     
-
     init_wavetable_hybrid2();
     init_dac();
     init_tim6();

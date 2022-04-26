@@ -154,55 +154,6 @@ void move_ball(void)
         }
 }
 
-void move_ball_timer(int* x, int* y)
-{
-    for(int c=0; c<4; c++) {
-        int dx=0;
-        int dy=0;
-        drive_column(c);
-        nano_wait(500000); // wait .5 ms
-        int r = read_rows();
-        if (c==3) { // leftmost column
-            if (r & 8) { // '1'
-                dy -= 1; dx -= 1;
-            }
-            if (r & 4) { // '4'
-                dx -= 1;
-            }
-            if (r & 2) { // '7'
-                dy += 1; dx -= 1;
-            }
-        } else if (c == 2) { // column 2
-            if (r & 8) { // '2'
-                dy -= 1;
-            }
-            if (r & 4) { // '5' re-center the ball
-                erase(*x,*y);
-                dx = 1; dy = 1;
-                *x = 119; *y = 159;
-            }
-            if (r & 2) { // '8'
-                dy += 1;
-            }
-        } else if (c == 1) { // column 3
-            if (r & 8) { // '3'
-                dy -= 1; dx += 1;
-            }
-            if (r & 4) { // '6'
-                dx += 1;
-            }
-            if (r & 2) { // '9'
-                dy += 1; dx += 1;
-            }
-        }
-        if (dx !=0 || dy != 0) {
-            *x += dx;
-            *y += dy;
-            update2(*x,*y);
-        }
-    }
-}
-
 
 void basic_drawing(void)
 {
