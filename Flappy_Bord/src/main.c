@@ -12,22 +12,22 @@
 #define NEW_GAME_START_Y 160
 #define PIPE_START_X 240
 
-#define UPPER_SCREEN_BOUND 0
-#define LOWER_SCREEN_BOUND 350
-#define MAX_DOWNWARD_VELOCITY -12
-#define VELOCITY_MODIFIER 2
-#define JUMP_VELOCITY 15
-#define PIPE_SPEED 5
-
-#define PIPE_HORIZONTAL_PAD 5
-#define PIPE_VERTICAL_PAD 0
-#define BIRD_VERTICAL_PAD 14
-#define BIRD_HORIZONTAL_PAD -1
-
 #define BIRD_HEIGHT 24
 #define BIRD_WIDTH 34
 #define PIPE_HEIGHT 235
 #define PIPE_WIDTH 40
+
+#define PIPE_HORIZONTAL_PAD 5
+#define PIPE_VERTICAL_PAD 0
+#define BIRD_VERTICAL_PAD 14
+#define BIRD_HORIZONTAL_PAD 0
+
+#define UPPER_SCREEN_BOUND -7
+#define LOWER_SCREEN_BOUND 305-BIRD_HEIGHT - BIRD_VERTICAL_PAD/2
+#define MAX_DOWNWARD_VELOCITY -12
+#define VELOCITY_MODIFIER 2
+#define JUMP_VELOCITY 15
+#define PIPE_SPEED 5
 
 #define DIFFICULTY_EASY 60
 #define DIFFICULTY_MED  50
@@ -45,6 +45,9 @@ extern const Picture bird1;
 extern const Picture bird3;
 extern const Picture brick_wall;
 extern const Picture backgroundFlappy;
+TempPicturePtr(pipe, PIPE_WIDTH + PIPE_HORIZONTAL_PAD,210);
+
+
 
 int bird_x = NEW_GAME_START_X;
 int bird_y = NEW_GAME_START_Y;
@@ -158,6 +161,7 @@ void TIM7_IRQHandler(){ //LCD update and physics calculations
             }
             draw_pipes2(pipe_x,top_pipe_y,bottom_pipe_y);
         }
+        collisionDetection();
     }
 }
 
@@ -179,9 +183,9 @@ void collisionDetection()
     */
 
     //Case 0 (Bird hits bottom)
-    if(bird_y >= 281) endGame();
+    if(bird_y >= LOWER_SCREEN_BOUND) endGame();
     //Case 1 (Bird hits top)
-    if (bird_y <= 0) endGame();
+    if (bird_y <= UPPER_SCREEN_BOUND) endGame();
     //Case 2 (Bird hits left side of bottom pipe)
     if ((bird_x+BIRD_WIDTH>pipe_x)&&(bird_y-BIRD_HEIGHT>=bottom_pipe_y)) endGame();
     //Case 3 (Bird hits top side of the bottom pipe)
@@ -206,20 +210,20 @@ void disable_physics(){
 void draw_bird_normal(int x, int y)
 {
     TempPicturePtr(tmp, BIRD_WIDTH + BIRD_HORIZONTAL_PAD,BIRD_HEIGHT + BIRD_VERTICAL_PAD); // Create a temporary 50x50 image.
-    pic_subset(tmp, &BACKGROUND, x-tmp->width/2, y-tmp->height/2); // Copy the background
+    pic_subset(tmp, &BACKGROUND, x/* -tmp->width/2 */, y/* -tmp->height/2 */); // Copy the background
     pic_overlay(tmp, BIRD_HORIZONTAL_PAD / 2,BIRD_VERTICAL_PAD / 2, &BIRD_NORMAL, BIRD_NORMAL.transparent); // Overlay the ball
-    LCD_DrawPicture(x-tmp->width/2,y-tmp->height/2, tmp); // Draw
+    LCD_DrawPicture(x/* -tmp->width/2 */,y/* -tmp->height/2 */, tmp); // Draw
 }
 
 void draw_flapping(int x, int y)
 {
     TempPicturePtr(tmp, BIRD_WIDTH + BIRD_HORIZONTAL_PAD,BIRD_HEIGHT + BIRD_VERTICAL_PAD); // Create a temporary 50x50 image.
-    pic_subset(tmp, &BACKGROUND, x-tmp->width/2, y-tmp->height/2); // Copy the background
+    pic_subset(tmp, &BACKGROUND, x/* -tmp->width/2 */, y/* -tmp->height/2 */); // Copy the background
     pic_overlay(tmp, BIRD_HORIZONTAL_PAD / 2,BIRD_VERTICAL_PAD / 2, &BIRD_FLAP, BIRD_FLAP.transparent); // Overlay the ball
-    LCD_DrawPicture(x-tmp->width/2,y-tmp->height/2, tmp); // Draw
+    LCD_DrawPicture(x/* -tmp->width/2 */,y/* -tmp->height/2 */, tmp); // Draw
 }
 
-void draw_pipes(int x, int top_y, int bottom_y){
+/* void draw_pipes(int x, int top_y, int bottom_y){
     TempPicturePtr(pipe, PIPE_WIDTH + PIPE_HORIZONTAL_PAD,210); 
 
     pic_subset(pipe, &BACKGROUND, x-pipe->width, top_y-pipe->height); // Copy the background
@@ -229,13 +233,13 @@ void draw_pipes(int x, int top_y, int bottom_y){
     pic_subset(pipe, &BACKGROUND, x-pipe->width, bottom_y-pipe->height); // Copy the background
     pic_overlay(pipe, 0,0, &PIPE_TOP, PIPE_BOTTOM.transparent); // Overlay the ball 
     LCD_DrawPicture(x-pipe->width,bottom_y-pipe->height, pipe); // Draw
-}
+} */
 
 void draw_pipes2(int x, int top_y, int bottom_y){
-    TempPicturePtr(pipe, PIPE_WIDTH + PIPE_HORIZONTAL_PAD,210); 
+    //TempPicturePtr(pipe, PIPE_WIDTH + PIPE_HORIZONTAL_PAD,210); 
     TempPicturePtr(background, PIPE_HORIZONTAL_PAD, 210);
 
-    pic_overlay(pipe, 0,0, &PIPE_BOTTOM, PIPE_TOP.transparent); // Overlay the ball 
+    //pic_overlay(pipe, 0,0, &PIPE_BOTTOM, PIPE_TOP.transparent);
     pic_subset(background, &BACKGROUND, x+PIPE_WIDTH , top_y/* +pipe->height */); // Copy the background
     pic_overlay(pipe, PIPE_WIDTH, 0, &background, 0);
     LCD_DrawPicture(x/* -pipe->width */,top_y/* -pipe->height */, pipe); // Draw
@@ -449,13 +453,10 @@ int main(void)
     MIDI_Player *mp = midi_init(midifile);
     init_tim2(10417);
     char flag = '0';
+    pic_overlay(pipe, 0,0, &PIPE_BOTTOM, PIPE_TOP.transparent);
 
     new_game();
     for(;;) {
-        if(physics_enabled)
-        {
-            collisionDetection();
-        }
         if(player_score > 5 && player_score <= 10){
             difficulty = DIFFICULTY_MED;
         }
