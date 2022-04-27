@@ -5,7 +5,7 @@
             "includePath": [
                 "${default}",
                 "${workspaceFolder}/Flappy_Bord/CMSIS/device",
-                "${workspaceFolder}/Flappy_Bord/CMSIS/core",
+                "${workspaceFolder}/Flappy_Bord/CMSIS/core"
             ],
             "defines": [
                 "_DEBUG",
