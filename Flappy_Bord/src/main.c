@@ -10,29 +10,38 @@
 #define UPDATE_RATE 30 //In updates per second
 #define NEW_GAME_START_X 30
 #define NEW_GAME_START_Y 160
+#define PIPE_START_X 240
 
 #define UPPER_SCREEN_BOUND 0
 #define LOWER_SCREEN_BOUND 350
 #define MAX_DOWNWARD_VELOCITY -12
 #define VELOCITY_MODIFIER 2
 #define JUMP_VELOCITY 15
+#define PIPE_SPEED 5
 
-#define PIPE_HORIZONTAL_PAD 0
+#define PIPE_HORIZONTAL_PAD 5
 #define PIPE_VERTICAL_PAD 0
-#define BIRD_VERTICAL_PAD 16
-#define BIRD_HORIZONTAL_PAD 0
+#define BIRD_VERTICAL_PAD 14
+#define BIRD_HORIZONTAL_PAD -1
 
 #define BIRD_HEIGHT 24
 #define BIRD_WIDTH 34
-#define PIPE_HEIGHT 0
-#define PIPE_WIDTH 0
+#define PIPE_HEIGHT 235
+#define PIPE_WIDTH 40
+
+#define DIFFICULTY_EASY 60
+#define DIFFICULTY_MED  50
+#define DIFFICULTY_HARD 40
 
 #define BACKGROUND backgroundFlappy
+#define BIRD_NORMAL bird1
+#define BIRD_FLAP bird3
 #define PIPE_TOP brick_wall
 #define PIPE_BOTTOM brick_wall
 
+#define TempPicturePtr(name,width,height) Picture name[(width)*(height)/6+2] = { {width,height,2} }
+
 extern const Picture bird1;
-extern const Picture bird2;
 extern const Picture bird3;
 extern const Picture brick_wall;
 extern const Picture backgroundFlappy;
@@ -40,10 +49,11 @@ extern const Picture backgroundFlappy;
 int bird_x = NEW_GAME_START_X;
 int bird_y = NEW_GAME_START_Y;
 int bird_v = 0; //velocity
-int bird_state = 1; //1 = normal, 2= flapping
 
-int pipe_x = 0;
-int pipe_y = 0;
+int pipe_x = PIPE_START_X;
+int top_pipe_y = 0;
+int bottom_pipe_y = 0;
+
 
 char physics_enabled = 0;
 char start_game = 0;
@@ -51,9 +61,11 @@ int player_score = 0;
 int high_score = 0;
 unsigned int seed = 0;
 
+char pipes_on_screen = 0;
+int difficulty = DIFFICULTY_EASY;
+
 uint8_t notes[] = { 60,62,64,65,67,69,71,72,71,69,67,65,64,62,60,0 };
 uint8_t num = sizeof notes / sizeof notes[0] - 1;
-char music_playing = 0;
 
 struct {
     uint8_t in_use;
@@ -102,7 +114,6 @@ void EXTI4_15_IRQHandler(){
     EXTI->PR |= EXTI_PR_PR6;
     start_game = 1;
     bird_v = JUMP_VELOCITY;
-    bird_state = 2;
 }
 
 void init_tim7(){
@@ -118,16 +129,34 @@ void init_tim7(){
 
 void TIM7_IRQHandler(){ //LCD update and physics calculations
     TIM7->SR &= ~TIM_SR_UIF;
+
     if(physics_enabled){
+        bird_v = bird_y <= UPPER_SCREEN_BOUND ? -1 : bird_v;
         int dv = bird_v<=MAX_DOWNWARD_VELOCITY? 0 : -1;
         bird_v += dv;
-        int dy = (bird_y > LOWER_SCREEN_BOUND && bird_v < 0) || (bird_y < UPPER_SCREEN_BOUND && bird_v > 0) ? 0 : bird_v/VELOCITY_MODIFIER;
+        int dy = (bird_y > LOWER_SCREEN_BOUND && bird_v < 0) ? 0 : bird_v/VELOCITY_MODIFIER;
         bird_y -= dy;
-        draw_bird1(bird_x,bird_y); //TODO - Add in pipe drawing, timing, and spacing logic
-        if(bird_v > JUMP_VELOCITY-3) {
-            draw_bird3(bird_x,bird_y);
-            for(int j = 0; j < 25000; j += 1);
 
+        if(bird_v > JUMP_VELOCITY-3) {
+            draw_flapping(bird_x,bird_y);
+        }
+        else{
+            draw_bird_normal(bird_x,bird_y); //TODO - Add in pipe drawing, timing, and spacing logic
+        }
+        if(!pipes_on_screen && rand() %20 == 5){
+            pipe_x = PIPE_START_X;
+            int spacing = difficulty + rand() % 15;
+            int center = 50 + rand() % (225-difficulty);
+            top_pipe_y = center - spacing - PIPE_HEIGHT;
+            bottom_pipe_y = center + spacing;
+            pipes_on_screen = 1;
+        }
+        if(pipes_on_screen){
+            pipe_x -= PIPE_SPEED;
+            if(pipe_x < 0-PIPE_WIDTH){
+                pipes_on_screen = 0;
+            }
+            draw_pipes(pipe_x,top_pipe_y,bottom_pipe_y);
         }
     }
 }
@@ -140,37 +169,48 @@ void disable_physics(){
     physics_enabled = 0;
 }
 
-#define TempPicturePtr(name,width,height) Picture name[(width)*(height)/6+2] = { {width,height,2} }
 
-void draw_bird1(int x, int y)
+void draw_bird_normal(int x, int y)
 {
     TempPicturePtr(tmp, BIRD_WIDTH + BIRD_HORIZONTAL_PAD,BIRD_HEIGHT + BIRD_VERTICAL_PAD); // Create a temporary 50x50 image.
     pic_subset(tmp, &BACKGROUND, x-tmp->width/2, y-tmp->height/2); // Copy the background
-    pic_overlay(tmp, BIRD_HORIZONTAL_PAD / 2,BIRD_VERTICAL_PAD / 2, &bird1, bird1.transparent); // Overlay the ball
+    pic_overlay(tmp, BIRD_HORIZONTAL_PAD / 2,BIRD_VERTICAL_PAD / 2, &BIRD_NORMAL, BIRD_NORMAL.transparent); // Overlay the ball
     LCD_DrawPicture(x-tmp->width/2,y-tmp->height/2, tmp); // Draw
 }
 
-void draw_bird3(int x, int y)
+void draw_flapping(int x, int y)
 {
     TempPicturePtr(tmp, BIRD_WIDTH + BIRD_HORIZONTAL_PAD,BIRD_HEIGHT + BIRD_VERTICAL_PAD); // Create a temporary 50x50 image.
     pic_subset(tmp, &BACKGROUND, x-tmp->width/2, y-tmp->height/2); // Copy the background
-    pic_overlay(tmp, BIRD_HORIZONTAL_PAD / 2,BIRD_VERTICAL_PAD / 2, &bird3, bird3.transparent); // Overlay the ball
+    pic_overlay(tmp, BIRD_HORIZONTAL_PAD / 2,BIRD_VERTICAL_PAD / 2, &BIRD_FLAP, BIRD_FLAP.transparent); // Overlay the ball
     LCD_DrawPicture(x-tmp->width/2,y-tmp->height/2, tmp); // Draw
 }
 
-// void draw_top_pipe(int x, int y){ //TODO - Figure out why these freak out TempPicturePtr
-//     TempPicturePtr(tmp, PIPE_WIDTH + PIPE_HORIZONTAL_PAD,PIPE_HEIGHT + PIPE_VERTICAL_PAD); // Create a temporary 50x50 image.
-//     pic_subset(tmp, &background, x-tmp->width/2, y-tmp->height/2); // Copy the background
-//     pic_overlay(tmp, PIPE_HORIZONTAL_PAD / 2,PIPE_VERTICAL_PAD / 2, &ball, ball.transparent); // Overlay the ball //TODO - REPLACE BALL w/ pipe top
-//     LCD_DrawPicture(x-tmp->width/2,y-tmp->height/2, tmp); // Draw
-// }
+void draw_pipes(int x, int top_y, int bottom_y){
+    TempPicturePtr(pipe, PIPE_WIDTH + PIPE_HORIZONTAL_PAD,210); 
 
-// void draw_bottom_pipe(int x, int y){
-//     TempPicturePtr(tmp, PIPE_WIDTH + PIPE_HORIZONTAL_PAD,PIPE_HEIGHT + PIPE_VERTICAL_PAD); // Create a temporary 50x50 image.
-//     pic_subset(tmp, &background, x-tmp->width/2, y-tmp->height/2); // Copy the background
-//     pic_overlay(tmp, PIPE_HORIZONTAL_PAD / 2,PIPE_VERTICAL_PAD / 2, &ball, ball.transparent); // Overlay the ball //TODO - REPLACE BALL w/ pipe bottom
-//     LCD_DrawPicture(x-tmp->width/2,y-tmp->height/2, tmp); // Draw
-// }
+    pic_subset(pipe, &BACKGROUND, x-pipe->width, top_y-pipe->height); // Copy the background
+    pic_overlay(pipe, 0,0, &PIPE_BOTTOM, PIPE_TOP.transparent); // Overlay the ball 
+    LCD_DrawPicture(x-pipe->width,top_y-pipe->height, pipe); // Draw
+
+    pic_subset(pipe, &BACKGROUND, x-pipe->width, bottom_y-pipe->height); // Copy the background
+    pic_overlay(pipe, 0,0, &PIPE_TOP, PIPE_BOTTOM.transparent); // Overlay the ball 
+    LCD_DrawPicture(x-pipe->width,bottom_y-pipe->height, pipe); // Draw
+}
+
+void draw_pipes2(int x, int top_y, int bottom_y){
+    TempPicturePtr(pipe, PIPE_WIDTH + PIPE_HORIZONTAL_PAD,210); 
+    TempPicturePtr(background, PIPE_HORIZONTAL_PAD, 210);
+
+    pic_overlay(pipe, 0,0, &PIPE_BOTTOM, PIPE_TOP.transparent); // Overlay the ball 
+    pic_subset(background, &BACKGROUND, x+pipe->width, top_y); // Copy the background
+    pic_overlay(pipe, PIPE_WIDTH, 0, &background, 0);
+    LCD_DrawPicture(x-pipe->width,top_y-pipe->height, pipe); // Draw
+
+    pic_subset(background, &BACKGROUND, x+pipe->width, bottom_y); // Copy the background
+    pic_overlay(pipe, PIPE_WIDTH, 0, &background, 0);
+    LCD_DrawPicture(x-pipe->width,bottom_y-pipe->height, pipe); // Draw
+}
 
 void init_tim6(void)
 {
@@ -292,12 +332,10 @@ void init_tim2(int n) {
 }
 
 void start_music(){
-    music_playing = 1;
     DAC->CR = DAC_CR_EN1;
 }
 
 void stop_music(){
-    music_playing = 0;
     DAC->CR &= ~DAC_CR_EN1;
 }
 
@@ -328,7 +366,6 @@ void draw_num(u16 x,u16 y,u16 fc, u16 bc, int num, u8 size, u8 mode){
 
 void new_game(){
     LCD_Clear(0);
-    bird_state = 1;
     int current_line = 50;
 
     if(seed > 0) { 
@@ -345,12 +382,23 @@ void new_game(){
     current_line += 20;
     LCD_DrawString(20,current_line, YELLOW, BLACK, "Press Any Button To Play!", 16, 1);
 
-    bird_x = NEW_GAME_START_X;
-    bird_y = NEW_GAME_START_Y;
     while(start_game == 0){
         seed >= UINTMAX_MAX ? 1 : seed++;
     }
     srand(seed);
+    start_new_game();
+}
+
+void start_new_game(){
+    bird_x = NEW_GAME_START_X;
+    bird_y = NEW_GAME_START_Y;
+    bird_v = 0;
+    pipe_x = PIPE_START_X;
+    top_pipe_y = 0;
+    bottom_pipe_y = 0;
+    player_score = 0;
+    pipes_on_screen = 0;
+    difficulty = DIFFICULTY_EASY;
     LCD_DrawPicture(0,0,&BACKGROUND);
     enable_physics();
     start_music();
@@ -367,7 +415,7 @@ int main(void)
     init_tim6();
     MIDI_Player *mp = midi_init(midifile);
     init_tim2(10417);
-
+    
     new_game();
     for(;;) {
         if(bird_y > 350){
@@ -375,6 +423,12 @@ int main(void)
             disable_physics();
             stop_music(); //TODO - Figure out how to restart song from beginning
             new_game();
+        }
+        if(player_score > 5 && player_score <= 10){
+            difficulty = DIFFICULTY_MED;
+        }
+        else if(player_score > 10){
+            difficulty = DIFFICULTY_HARD;
         }
         // If we hit the end of the MIDI file, start over.
         if (mp->nexttick == MAXTICKS)
