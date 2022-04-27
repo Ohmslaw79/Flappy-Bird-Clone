@@ -156,7 +156,7 @@ void TIM7_IRQHandler(){ //LCD update and physics calculations
             if(pipe_x < 0-PIPE_WIDTH){
                 pipes_on_screen = 0;
             }
-            draw_pipes(pipe_x,top_pipe_y,bottom_pipe_y);
+            draw_pipes2(pipe_x,top_pipe_y,bottom_pipe_y);
         }
     }
 }
@@ -226,13 +226,13 @@ void draw_pipes2(int x, int top_y, int bottom_y){
     TempPicturePtr(background, PIPE_HORIZONTAL_PAD, 210);
 
     pic_overlay(pipe, 0,0, &PIPE_BOTTOM, PIPE_TOP.transparent); // Overlay the ball 
-    pic_subset(background, &BACKGROUND, x+pipe->width, top_y); // Copy the background
+    pic_subset(background, &BACKGROUND, x+PIPE_WIDTH , top_y/* +pipe->height */); // Copy the background
     pic_overlay(pipe, PIPE_WIDTH, 0, &background, 0);
-    LCD_DrawPicture(x-pipe->width,top_y-pipe->height, pipe); // Draw
+    LCD_DrawPicture(x/* -pipe->width */,top_y/* -pipe->height */, pipe); // Draw
 
-    pic_subset(background, &BACKGROUND, x+pipe->width, bottom_y); // Copy the background
+    pic_subset(background, &BACKGROUND, x+PIPE_WIDTH, bottom_y/* -pipe->height */); // Copy the background
     pic_overlay(pipe, PIPE_WIDTH, 0, &background, 0);
-    LCD_DrawPicture(x-pipe->width,bottom_y-pipe->height, pipe); // Draw
+    LCD_DrawPicture(x/* -pipe->width */,bottom_y/* -pipe->height */, pipe); // Draw
 }
 
 void init_tim6(void)
