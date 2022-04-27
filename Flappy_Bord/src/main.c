@@ -172,14 +172,24 @@ void endGame()
 
 void collisionDetection()
 {
+    /*
+    int pipe_x = PIPE_START_X;
+    int top_pipe_y = 0;
+    int bottom_pipe_y = 0;
+    */
+
     //Case 0 (Bird hits bottom)
     if(bird_y >= 281) endGame();
     //Case 1 (Bird hits top)
-    else if (bird_y <= 0) endGame();
+    if (bird_y <= 0) endGame();
     //Case 2 (Bird hits left side of bottom pipe)
+    if ((bird_x+BIRD_WIDTH>pipe_x)&&(bird_y-BIRD_HEIGHT>=bottom_pipe_y)) endGame();
     //Case 3 (Bird hits top side of the bottom pipe)
+    if (0) endGame();
     //Case 4 (Bird hits left side of top pipe)
+    if (((bird_x+BIRD_WIDTH>pipe_x)&&(bird_y<=top_pipe_y))) endGame();
     //Case 5 (Bird hits bottom of top pipe)
+    if (0) endGame();
 }
 
 
