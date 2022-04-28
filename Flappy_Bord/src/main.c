@@ -189,11 +189,11 @@ void collisionDetection()
     //Case 2 (Bird hits left side of bottom pipe)
     if ((bird_x+BIRD_WIDTH>pipe_x)&&(bird_y-BIRD_HEIGHT>=bottom_pipe_y)) endGame();
     //Case 3 (Bird hits top side of the bottom pipe)
-    if (0) endGame();
+    if (((pipe_x-BIRD_WIDTH-1 <= bird_x) && (bird_x <= pipe_x + PIPE_WIDTH + BIRD_WIDTH-1))&&((bottom_pipe_y + BIRD_HEIGHT -1) <= bird_y)) endGame();
     //Case 4 (Bird hits left side of top pipe)
     if (((bird_x+BIRD_WIDTH>pipe_x)&&(bird_y<=top_pipe_y))) endGame();
     //Case 5 (Bird hits bottom of top pipe)
-    if (0) endGame();
+    //if (((pipe_x-BIRD_WIDTH-1 <= bird_x) && (bird_x <= pipe_x + PIPE_WIDTH + BIRD_WIDTH-1))&&((top_pipe_y + PIPE_HEIGHT + BIRD_HEIGHT -1) >= bird_y)) endGame();
 }
 
 
