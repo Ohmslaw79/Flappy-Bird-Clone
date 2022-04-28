@@ -66,6 +66,7 @@ unsigned int seed = 0;
 
 char pipes_on_screen = 0;
 int difficulty = DIFFICULTY_EASY;
+char scored = 0;
 
 uint8_t notes[] = { 60,62,64,65,67,69,71,72,71,69,67,65,64,62,60,0 };
 uint8_t num = sizeof notes / sizeof notes[0] - 1;
@@ -146,13 +147,14 @@ void TIM7_IRQHandler(){ //LCD update and physics calculations
         else{
             draw_bird_normal(bird_x,bird_y); //TODO - Add in pipe drawing, timing, and spacing logic
         }
-        if(!pipes_on_screen && rand() %20 == 5){
+        if(!pipes_on_screen && rand() % 30 == 5){
             pipe_x = PIPE_START_X;
-            int spacing = difficulty + rand() % 15;
-            int center = 50 + rand() % (225-difficulty);
+            int spacing = difficulty + rand() % 25;
+            int center = 50 + rand() % (205-spacing);
             top_pipe_y = center - spacing - PIPE_HEIGHT;
             bottom_pipe_y = center + spacing;
             pipes_on_screen = 1;
+            scored = 0;
         }
         if(pipes_on_screen){
             pipe_x -= PIPE_SPEED;
@@ -162,16 +164,26 @@ void TIM7_IRQHandler(){ //LCD update and physics calculations
             draw_pipes2(pipe_x,top_pipe_y,bottom_pipe_y);
         }
         collisionDetection();
+        track_score();
+        draw_score();
     }
 }
 
 
 void endGame()
 {
+    high_score = player_score > high_score? player_score : high_score;
     start_game = 0;
     disable_physics();
     stop_music(); //TODO - Figure out how to restart song from beginning
     new_game();
+}
+
+void track_score(){
+    if(bird_x > pipe_x + PIPE_WIDTH && !scored){
+        player_score++;
+        scored = 1;
+    }
 }
 
 void collisionDetection()
@@ -181,25 +193,25 @@ void collisionDetection()
     int top_pipe_y = 0;
     int bottom_pipe_y = 0;
     */
+    //Case 2 (Bird hits bottom pipe)
+    //Case 3 (Bird hits top side of the bottom pipe)
+    //if (((bird_x+BIRD_WIDTH >= bird_x) && (bird_x + BIRD_WIDTH <= pipe_x + PIPE_WIDTH))&&((bottom_pipe_y) >= bird_y + BIRD_HEIGHT)) endGame();
+
+    //Case 4 (Bird hits left side of top pipe)
+    //if (((bird_x+BIRD_WIDTH>pipe_x)&&(bird_y<=top_pipe_y))) endGame();
 
     //Case 0 (Bird hits bottom)
     if(bird_y >= LOWER_SCREEN_BOUND) endGame();
     //Case 1 (Bird hits top)
     if (bird_y <= UPPER_SCREEN_BOUND) endGame();
-    //Case 2 (Bird hits bottom pipe)
-        //Case 3 (Bird hits top side of the bottom pipe)
-        //if (((bird_x+BIRD_WIDTH >= bird_x) && (bird_x + BIRD_WIDTH <= pipe_x + PIPE_WIDTH))&&((bottom_pipe_y) >= bird_y + BIRD_HEIGHT)) endGame();
 
-        //Case 4 (Bird hits left side of top pipe)
-        //if (((bird_x+BIRD_WIDTH>pipe_x)&&(bird_y<=top_pipe_y))) endGame();
-        //Case 5 (Bird hits top pipe)
-    if(((bird_x+BIRD_WIDTH) >= pipe_x) && (bird_x <= (pipe_x + PIPE_WIDTH))){ //Check if bird is between pipes
-        if ((bird_y+BIRD_HEIGHT)>=bottom_pipe_y) endGame(); //check if bird hit top pipe
-        if (bird_y <= (top_pipe_y + PIPE_HEIGHT)) endGame(); //check if bird hit bottom pipe
+    if(pipes_on_screen){
+        if(((bird_x+BIRD_WIDTH) >= pipe_x) && (bird_x <= (pipe_x + PIPE_WIDTH))){ //Check if bird is between pipes
+            if ((bird_y+BIRD_HEIGHT)>=bottom_pipe_y) endGame(); //check if bird hit top pipe
+            else if (bird_y <= (top_pipe_y + PIPE_HEIGHT)) endGame(); //check if bird hit bottom pipe
+        }
     }
 }
-
-
 
 void enable_physics(){
     physics_enabled = 1;
@@ -208,7 +220,6 @@ void enable_physics(){
 void disable_physics(){
     physics_enabled = 0;
 }
-
 
 void draw_bird_normal(int x, int y)
 {
@@ -250,6 +261,11 @@ void draw_pipes2(int x, int top_y, int bottom_y){
     pic_subset(background, &BACKGROUND, x+PIPE_WIDTH, bottom_y/* -pipe->height */); // Copy the background
     pic_overlay(pipe, PIPE_WIDTH, 0, &background, 0);
     LCD_DrawPicture(x/* -pipe->width */,bottom_y/* -pipe->height */, pipe); // Draw
+}
+
+void draw_score(){
+    LCD_DrawString(5,304, YELLOW, BLACK, "SCORE:", 16, 0);
+    draw_num(60,304, YELLOW, BLACK, player_score, 16, 0);
 }
 
 void init_tim6(void)
@@ -409,7 +425,7 @@ void new_game(){
     int current_line = 50;
 
     if(seed > 0) { 
-        LCD_DrawString(90,current_line, YELLOW, BLACK, "GAME OVER!" + player_score, 16, 1);
+        LCD_DrawString(90,current_line, YELLOW, BLACK, "GAME OVER!", 16, 1);
         current_line += 30;
         LCD_DrawString(80,current_line, YELLOW, BLACK, "YOUR SCORE: ", 16, 1);
         draw_num(173,current_line, YELLOW, BLACK, player_score, 16, 1);
