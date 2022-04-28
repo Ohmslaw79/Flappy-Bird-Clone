@@ -14,7 +14,7 @@
 
 #define BIRD_HEIGHT 24
 #define BIRD_WIDTH 34
-#define PIPE_HEIGHT 235
+#define PIPE_HEIGHT 210
 #define PIPE_WIDTH 40
 
 #define PIPE_HORIZONTAL_PAD 5
@@ -186,14 +186,17 @@ void collisionDetection()
     if(bird_y >= LOWER_SCREEN_BOUND) endGame();
     //Case 1 (Bird hits top)
     if (bird_y <= UPPER_SCREEN_BOUND) endGame();
-    //Case 2 (Bird hits left side of bottom pipe)
-    if ((bird_x+BIRD_WIDTH>pipe_x)&&(bird_y-BIRD_HEIGHT>=bottom_pipe_y)) endGame();
-    //Case 3 (Bird hits top side of the bottom pipe)
-    if (((pipe_x-BIRD_WIDTH-1 <= bird_x) && (bird_x <= pipe_x + PIPE_WIDTH + BIRD_WIDTH-1))&&((bottom_pipe_y + BIRD_HEIGHT -1) <= bird_y)) endGame();
-    //Case 4 (Bird hits left side of top pipe)
-    if (((bird_x+BIRD_WIDTH>pipe_x)&&(bird_y<=top_pipe_y))) endGame();
-    //Case 5 (Bird hits bottom of top pipe)
-    //if (((pipe_x-BIRD_WIDTH-1 <= bird_x) && (bird_x <= pipe_x + PIPE_WIDTH + BIRD_WIDTH-1))&&((top_pipe_y + PIPE_HEIGHT + BIRD_HEIGHT -1) >= bird_y)) endGame();
+    //Case 2 (Bird hits bottom pipe)
+        //Case 3 (Bird hits top side of the bottom pipe)
+        //if (((bird_x+BIRD_WIDTH >= bird_x) && (bird_x + BIRD_WIDTH <= pipe_x + PIPE_WIDTH))&&((bottom_pipe_y) >= bird_y + BIRD_HEIGHT)) endGame();
+
+        //Case 4 (Bird hits left side of top pipe)
+        //if (((bird_x+BIRD_WIDTH>pipe_x)&&(bird_y<=top_pipe_y))) endGame();
+        //Case 5 (Bird hits top pipe)
+    if(((bird_x+BIRD_WIDTH) >= pipe_x) && (bird_x <= (pipe_x + PIPE_WIDTH))){ //Check if bird is between pipes
+        if ((bird_y+BIRD_HEIGHT)>=bottom_pipe_y) endGame(); //check if bird hit top pipe
+        if (bird_y <= (top_pipe_y + PIPE_HEIGHT)) endGame(); //check if bird hit bottom pipe
+    }
 }
 
 
@@ -427,12 +430,12 @@ void new_game(){
 }
 
 void start_new_game(){
+    pipe_x = PIPE_START_X;
+    top_pipe_y = UPPER_SCREEN_BOUND;
+    bottom_pipe_y = LOWER_SCREEN_BOUND;
     bird_x = NEW_GAME_START_X;
     bird_y = NEW_GAME_START_Y;
     bird_v = 0;
-    pipe_x = PIPE_START_X;
-    top_pipe_y = 0;
-    bottom_pipe_y = 0;
     player_score = 0;
     pipes_on_screen = 0;
     difficulty = DIFFICULTY_EASY;
