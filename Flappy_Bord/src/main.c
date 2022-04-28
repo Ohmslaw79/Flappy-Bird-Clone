@@ -48,7 +48,6 @@ extern const Picture backgroundFlappy;
 TempPicturePtr(pipe, PIPE_WIDTH + PIPE_HORIZONTAL_PAD,210);
 
 
-
 int bird_x = NEW_GAME_START_X;
 int bird_y = NEW_GAME_START_Y;
 int bird_v = 0; //velocity
@@ -56,6 +55,8 @@ int bird_v = 0; //velocity
 int pipe_x = PIPE_START_X;
 int top_pipe_y = 0;
 int bottom_pipe_y = 0;
+
+//MIDI_Player *mp = midi_init(midifile);
 
 
 char physics_enabled = 0;
@@ -393,6 +394,19 @@ void start_music(){
 
 void stop_music(){
     DAC->CR &= ~DAC_CR_EN1;
+    TIM2 -> CR1 &= ~ TIM_CR1_CEN;
+    for(int j = 0; j < 16; j++)
+    {
+        voice[j].in_use = 0;
+        voice[j].note = 0;
+        voice[j].chan = 0;
+        voice[j].volume = 0;
+        voice[j].step = 0;
+        voice[j].offset = 0;
+    }
+    midi_init(midifile);
+    TIM2 -> CR1 |= TIM_CR1_CEN;
+
 }
 
 void TIM2_IRQHandler(void)
